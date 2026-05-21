@@ -4,7 +4,24 @@
       "Bash(gsd-sdk query *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(python \"C:\\\\Users\\\\ChenYi\\\\Documents\\\\Coding\\\\ai_chat_tool\\\\.planning\\\\write_summary.py\")"
+      "Bash(python \"C:\\\\Users\\\\ChenYi\\\\Documents\\\\Coding\\\\ai_chat_tool\\\\.planning\\\\write_summary.py\")",
+      "Skill(gsd-code-review)",
+      "Bash(.venv/Scripts/python -m pytest app/tests/test_auth.py app/tests/test_role_access.py -v)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(.venv/Scripts/python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload)",
+      "Bash(.venv/Scripts/python.exe -m pytest app/tests/ -v --tb=short)",
+      "Bash(curl *)",
+      "WebSearch",
+      "Bash(pip index *)",
+      "Bash(pip show *)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:llm-guard.readthedocs.io)",
+      "Bash(pip install *)",
+      "Bash(Select-String -Pattern \"error|Error|ERROR|failed|FAILED|Successfully\")",
+      "Bash(Select-Object -First 10)",
+      "Bash(slopcheck install *)",
+      "Skill(gsd-execute-phase)"
     ]
   }
 }

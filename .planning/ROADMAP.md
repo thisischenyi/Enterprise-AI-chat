@@ -46,7 +46,16 @@ Plans:
   3. Scanner failures (crash, timeout, error) block content rather than allowing it unfiltered
   4. Employee can select a model provider and send a chat message that receives a response through the backend
   5. Automated tests prove the main allow, input block, output block, and fail-closed paths work correctly
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Scanner Interfaces + DataProtectionScanner + LLMGuardrailScanner + Custom Recognizers + Block Messages (Wave 1)
+- [ ] 02-02-PLAN.md — SafetyPipeline + SafetyPolicy + AuditEvent + AuditRepository (Wave 1, depends on 02-01)
+- [ ] 02-03-PLAN.md — Model Providers + Chat API + Frontend Chat Page (Wave 2, depends on 02-01 + 02-02)
+- [ ] 02-04-PLAN.md — Integration Tests + Test Fixtures + Chat API Tests (Wave 2, depends on 02-01 + 02-02 + 02-03)
+
+Wave 1 *(02-01 and 02-02 can start together, 02-02 depends on 02-01 scanner interfaces)*
+Wave 2 *(blocked on Wave 1 completion)*
 
 ### Phase 3: Conversation History & Chat Interface
 **Goal**: Employees can browse and resume past conversations through a chat interface, with only allowed-through content stored
@@ -82,6 +91,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Auth | 3/3 | Complete   | 2026-05-21 |
-| 2. Safety Pipeline & Chat | 0/? | Not started | - |
+| 2. Safety Pipeline & Chat | 0/4 | Planned | - |
 | 3. Conversation History & Chat Interface | 0/? | Not started | - |
 | 4. Streaming & Admin Dashboard | 0/? | Not started | - |
