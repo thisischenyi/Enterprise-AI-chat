@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gsd-sdk query *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(python \"C:\\\\Users\\\\ChenYi\\\\Documents\\\\Coding\\\\ai_chat_tool\\\\.planning\\\\write_summary.py\")"
+    ]
+  }
+}
