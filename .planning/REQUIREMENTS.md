@@ -7,8 +7,8 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: Employee can sign in through OIDC authentication (mock OIDC for MVP with fixed test user)
-- [ ] **AUTH-02**: Backend routes have access to authenticated user identity (user ID, role)
+- [ ] **AUTH-01**: Employee can sign in through OIDC authentication (mock OIDC for MVP with fixed test user) — backend done, frontend pending (Plan 02)
+- [x] **AUTH-02**: Backend routes have access to authenticated user identity (user ID, role) — completed in Plan 01-01
 - [ ] **AUTH-03**: Role distinction between employee (chat access) and admin (config + audit access)
 
 ### Chat
@@ -93,8 +93,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Backend done, frontend pending (Plan 02) |
+| AUTH-02 | Phase 1 | Completed (Plan 01-01) |
 | AUTH-03 | Phase 1 | Pending |
 | CHAT-01 | Phase 2 | Pending |
 | CHAT-02 | Phase 2 | Pending |
