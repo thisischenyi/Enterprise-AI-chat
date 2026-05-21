@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter, Routes, Route, Navigate } from "react-router";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { QueryClient } from "@tanstack/react-query";
+import { MemoryRouter, Routes, Route } from "react-router";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 import LoginPage from "../features/auth/LoginPage";
 import MockOIDCPage from "../features/auth/MockOIDCPage";
