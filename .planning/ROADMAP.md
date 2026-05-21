@@ -12,7 +12,7 @@ This roadmap delivers a safety-first enterprise AI chat application in four phas
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Auth** - Authentication foundation with mock OIDC and role-based access
+- [x] **Phase 1: Foundation & Auth** - Authentication foundation with mock OIDC and role-based access (completed 2026-05-21)
 - [ ] **Phase 2: Safety Pipeline & Chat** - Core safety pipeline, model gateway, non-streaming chat, and automated test coverage
 - [ ] **Phase 3: Conversation History & Chat Interface** - Conversation browsing, resuming, and allowed-through content storage
 - [ ] **Phase 4: Streaming & Admin Dashboard** - Streaming safety buffer and admin configuration/audit dashboard
@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Backend Walking Skeleton: project scaffold, DB schema, mock OIDC auth routes, auth middleware
 - [x] 01-02-PLAN.md — Frontend Auth UI: mock OIDC login flow, role selector, Zustand auth store, authenticated home page
-- [ ] 01-03-PLAN.md — Role-Based Access Enforcement: admin-only endpoint guards, role tests, frontend route guards
+- [x] 01-03-PLAN.md — Role-Based Access Enforcement: admin-only endpoint guards, role tests, frontend route guards
 
 ### Phase 2: Safety Pipeline & Chat
 **Goal**: The safety pipeline reliably blocks unsafe content and employees can chat through it
@@ -81,7 +81,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Auth | 2/3 | In Progress|  |
+| 1. Foundation & Auth | 3/3 | Complete   | 2026-05-21 |
 | 2. Safety Pipeline & Chat | 0/? | Not started | - |
 | 3. Conversation History & Chat Interface | 0/? | Not started | - |
 | 4. Streaming & Admin Dashboard | 0/? | Not started | - |
