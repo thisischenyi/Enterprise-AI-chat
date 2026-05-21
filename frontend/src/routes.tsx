@@ -3,6 +3,7 @@ import LoginPage from "./features/auth/LoginPage";
 import MockOIDCPage from "./features/auth/MockOIDCPage";
 import AuthCallbackPage from "./features/auth/AuthCallbackPage";
 import UserInfo from "./features/auth/UserInfo";
+import AdminStubPage from "./features/admin/AdminStubPage";
 import { useAuthStore } from "./stores/authStore";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -15,21 +16,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
   if (!user || user.role !== "admin") {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
-}
-
-export function AdminPlaceholder() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md text-center">
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-500">Coming in Phase 4</p>
-      </div>
-    </div>
-  );
 }
 
 export default function AppRoutes() {
@@ -50,11 +44,9 @@ export default function AppRoutes() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <AdminPlaceholder />
-              </AdminRoute>
-            </ProtectedRoute>
+            <AdminRoute>
+              <AdminStubPage />
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
