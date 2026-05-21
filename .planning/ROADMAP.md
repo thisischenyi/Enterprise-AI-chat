@@ -28,7 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Employee can sign in through mock OIDC authentication and access the application
   2. Backend routes receive authenticated user identity (user ID, role) on every authenticated request
   3. Admin-role users can access admin-only endpoints; employee-role users are restricted to chat endpoints
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Backend Walking Skeleton: project scaffold, DB schema, mock OIDC auth routes, auth middleware
+- [ ] 01-02-PLAN.md — Frontend Auth UI: mock OIDC login flow, role selector, Zustand auth store, authenticated home page
+- [ ] 01-03-PLAN.md — Role-Based Access Enforcement: admin-only endpoint guards, role tests, frontend route guards
 
 ### Phase 2: Safety Pipeline & Chat
 **Goal**: The safety pipeline reliably blocks unsafe content and employees can chat through it
@@ -76,7 +81,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Auth | 0/? | Not started | - |
+| 1. Foundation & Auth | 0/3 | Planning complete | - |
 | 2. Safety Pipeline & Chat | 0/? | Not started | - |
 | 3. Conversation History & Chat Interface | 0/? | Not started | - |
 | 4. Streaming & Admin Dashboard | 0/? | Not started | - |
