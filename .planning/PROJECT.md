@@ -48,7 +48,7 @@ Prove that employees can use AI chat safely in a controlled enterprise environme
 
 ## Context
 
-- Tech stack: React + TypeScript frontend, Python + FastAPI backend, PostgreSQL database
+- Tech stack: React + TypeScript frontend, Python + FastAPI backend, SQLite (MVP) / PostgreSQL (production) database
 - Model providers: Alibaba Bailian Qwen (cloud) and local OpenAI-compatible API (self-hosted)
 - Safety filtering uses Presidio (PII detection, data classification) and Llama Guard / LLM Guard (jailbreak, prompt injection, harmful content, compliance)
 - Both filtering libraries wrapped behind internal interfaces (DataProtectionScanner, LLMGuardrailScanner) so implementations can change
@@ -60,12 +60,12 @@ Prove that employees can use AI chat safely in a controlled enterprise environme
 
 ## Constraints
 
-- **Tech stack**: React + TypeScript frontend, Python + FastAPI backend, PostgreSQL — proven stack for enterprise web apps
+- **Tech stack**: React + TypeScript frontend, Python + FastAPI backend, SQLite for MVP / PostgreSQL for production — proven stack for enterprise web apps
 - **Architecture**: Frontend never calls model providers directly — all safety enforcement on backend
 - **Safety policy**: Block full content on any policy violation — no redaction or partial display
 - **Audit**: Log metadata only — never store raw prompts, raw model outputs, or full PII values
 - **Auth**: OIDC integration required — no anonymous access, mock OIDC for MVP
-- **Deployment**: Local development first (uvicorn + npm dev + local PostgreSQL) — deployment strategy deferred
+- **Deployment**: Local development first (uvicorn + npm dev + local SQLite) — deployment strategy deferred
 
 ## Key Decisions
 

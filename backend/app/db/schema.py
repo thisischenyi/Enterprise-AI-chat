@@ -1,9 +1,9 @@
 """Database schema — User and Session SQLAlchemy models.
 
 Uses SQLAlchemy 2 declarative mapping style with mapped_column.
-Role column has CHECK constraint for ('employee', 'admin').
-UUID columns use sqlalchemy UUID type (maps to PostgreSQL UUID,
-SQLite uses CHAR(32) for storage compatibility).
+MVP uses SQLite (aiosqlite); production can switch to PostgreSQL (asyncpg).
+UUID columns use sqlalchemy Uuid type (CHAR(32) storage in SQLite,
+native UUID in PostgreSQL when switched).
 """
 
 import uuid
@@ -27,7 +27,6 @@ class User(Base):
     role: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        # CHECK constraint enforced at DB level via Alembic migration
     )
     created_at: Mapped[datetime] = mapped_column(nullable=False, default=datetime.utcnow)
 

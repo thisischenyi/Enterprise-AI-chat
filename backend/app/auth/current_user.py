@@ -1,7 +1,7 @@
 """Current user dependency — FastAPI Depends for authenticated user identity.
 
 Extracts user from session cookie via DB lookup. Session tokens are
-signed with itsdangerous and stored in PostgreSQL (per D-03).
+signed with itsdangerous and stored in DB (SQLite for MVP, per D-03).
 Invalid/expired sessions return 401 (fail-closed, per threat model T-01-02).
 """
 

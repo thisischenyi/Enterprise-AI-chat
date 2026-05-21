@@ -31,8 +31,7 @@
 
 | Technology | Version | Purpose | Why | Confidence |
 |------------|---------|---------|-----|------------|
-| PostgreSQL | 16 | Primary database | PostgreSQL 16 (released Sep 2023) is stable and widely deployed. Stores conversations (allowed-through content only), audit events, user profiles, model configs, policy configs. JSONB columns for flexible audit metadata. | MEDIUM |
-| asyncpg | 0.30.x | Async PostgreSQL driver | Required for FastAPI async DB access with SQLAlchemy. Do NOT use psycopg2 (sync driver blocks async). | NEEDS VERIFICATION |
+| SQLite + aiosqlite | 3.x / 0.20.x | MVP database | SQLite for MVP development — no server setup, file-based, works out of the box. aiosqlite provides async driver for FastAPI. Production switches to PostgreSQL (asyncpg) by changing DATABASE_URL in .env. | MEDIUM |
 
 ### Safety Filtering — DataProtectionScanner (PII, Sensitive Data, Classification)
 
@@ -132,7 +131,7 @@
 | Create React App | Deprecated and unmaintained since 2023. Webpack-based, slow HMR. | Vite |
 | Redux | Excessive boilerplate for MVP. Actions, reducers, selectors, middleware for 3 pieces of state. | Zustand |
 | requests library | Synchronous HTTP client. Calling model APIs with requests blocks the async event loop, breaks streaming. | httpx (async) |
-| psycopg2 | Synchronous PostgreSQL driver. Same blocking problem as requests. | asyncpg |
+| psycopg2 / asyncpg | Sync/async PostgreSQL drivers. MVP uses SQLite; asyncpg needed when switching to PostgreSQL for production. | aiosqlite (MVP), asyncpg (production) |
 | Flask | No native async support. Streaming chat with safety buffering requires async throughout. | FastAPI |
 | Homegrown regex/keyword filtering for safety | Cannot detect prompt injection patterns, jailbreak obfuscation, or subtle harmful content. Enterprise safety requires ML-based detection. | Presidio + LLM Guard |
 | Jest | Slower than Vitest for Vite projects. Requires babel/swc transform config. | Vitest |
@@ -151,7 +150,7 @@ python -m venv .venv
 pip install fastapi==0.115.* uvicorn[standard]==0.34.* pydantic==2.*
 
 # Database
-pip install sqlalchemy==2.* asyncpg==0.30.* alembic==1.14.*
+pip install sqlalchemy==2.* aiosqlite==0.20.* alembic==1.14.*
 
 # Safety filtering
 pip install presidio-analyzer==2.2.* presidio-anonymizer==2.2.*
@@ -207,7 +206,7 @@ pip index versions presidio-anonymizer  # Verify 2.2.x is current
 pip index versions llm-guard      # Verify 1.2.x is current
 pip index versions spacy          # Verify 3.7.x is current
 pip index versions sqlalchemy     # Verify 2.x is current
-pip index versions asyncpg        # Verify 0.30.x is current
+pip index versions aiosqlite        # Verify 0.20.x is current
 pip index versions httpx          # Verify 0.28.x is current
 pip index versions sse-starlette  # Verify 2.x is current
 
@@ -233,7 +232,7 @@ npm info vitest version           # Verify 3.x is current
 
 | Area | Confidence | Reason |
 |------|------------|--------|
-| Core frameworks (React, FastAPI, PostgreSQL) | MEDIUM | Project spec mandates these. Version numbers from training data need verification. Choices are standard and well-justified. |
+| Core frameworks (React, FastAPI, SQLite MVP) | MEDIUM | Project spec mandates these. Version numbers from training data need verification. Choices are standard and well-justified. |
 | Safety filtering (Presidio, LLM Guard) | MEDIUM | Presidio is clearly the best PII choice. LLM Guard is best for MVP guardrails but version needs verification. Llama Guard deferred to Phase 2. |
 | Auth (Authlib, mock OIDC) | MEDIUM | Mock OIDC strategy is clear from project decisions. Authlib is the standard OIDC library but version needs verification. |
 | Streaming (SSE, eventsource-parser) | LOW | Streaming with safety buffering is architecturally complex. Library choices are reasonable but need deeper research on buffering patterns. |

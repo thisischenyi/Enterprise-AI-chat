@@ -8,6 +8,7 @@ Test users:
 import asyncio
 import uuid
 
+from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.db.schema import Base, User
@@ -33,14 +34,16 @@ TEST_USERS = [
 
 async def seed_users(database_url: str) -> None:
     """Insert mock test users into the database."""
-    engine = create_async_engine(database_url, echo=True)
+    engine_kwargs = {}
+    if database_url.startswith("sqlite"):
+        engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+    engine = create_async_engine(database_url, echo=False, **engine_kwargs)
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         for user_data in TEST_USERS:
-            # Check if user already exists
-            from sqlalchemy import select
-            result = await session.execute(select(User).where(User.email == user_data["email"]))
+            result = await session.execute(sa_select(User).where(User.email == user_data["email"]))
             existing = result.scalar_one_or_none()
             if existing is None:
                 user = User(**user_data)
@@ -56,7 +59,7 @@ def main() -> None:
     from dotenv import load_dotenv
 
     load_dotenv()
-    database_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost:5432/enterprise_chat_mvp")
+    database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./enterprise_chat_mvp.db")
     asyncio.run(seed_users(database_url))
 
 
