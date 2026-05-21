@@ -1,0 +1,1 @@
+"""Audit module — event recording and repository."""

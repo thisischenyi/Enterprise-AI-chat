@@ -1,0 +1,1 @@
+"""Auth module — OIDC provider and current user dependency."""

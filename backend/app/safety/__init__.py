@@ -1,0 +1,1 @@
+"""Safety module — safety pipeline and scanner interfaces."""

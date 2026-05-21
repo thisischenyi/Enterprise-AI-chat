@@ -1,0 +1,1 @@
+"""Models module — model provider interfaces and adapters."""

@@ -1,0 +1,1 @@
+"""Phase placeholder — API routes will be registered here in future phases."""
