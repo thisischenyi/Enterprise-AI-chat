@@ -21,7 +21,20 @@
       "Bash(Select-String -Pattern \"error|Error|ERROR|failed|FAILED|Successfully\")",
       "Bash(Select-Object -First 10)",
       "Bash(slopcheck install *)",
-      "Skill(gsd-execute-phase)"
+      "Skill(gsd-execute-phase)",
+      "Bash(.venv/Scripts/python.exe -c \"import spacy; print\\('spacy version:', spacy.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import presidio_analyzer; print\\('presidio-analyzer version:', presidio_analyzer.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import presidio_analyzer; analyzer = presidio_analyzer.AnalyzerEngine\\(\\); print\\('presidio-analyzer OK'\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import presidio_anonymizer; print\\('presidio-anonymizer OK'\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import llm_guard; print\\('llm_guard OK'\\)\")",
+      "Bash(.venv/Scripts/pip.exe install *)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(.venv/Scripts/python.exe -c \"from llm_guard.scanners import PromptInjectionScanner; print\\('OK'\\)\")",
+      "Bash(.venv/Scripts/pip.exe uninstall *)",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/python.exe -c \"import llm_guard.input_scanners.prompt_injection as pi; print\\([x for x in dir\\(pi\\) if not x.startswith\\('_'\\)]\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import llm_guard.input_scanners.jailbreak as jb; print\\([x for x in dir\\(jb\\) if not x.startswith\\('_'\\) and x[0].isupper\\(\\)]\\)\")",
+      "Skill(gsd-pause-work)"
     ]
   }
 }

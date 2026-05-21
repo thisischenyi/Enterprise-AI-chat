@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-21T14:25:57.148Z",
+  "phase": 2,
+  "phase_name": "Safety Pipeline & Chat",
+  "phase_dir": ".planning/phases/02-safety-pipeline-chat",
+  "plan": 1,
+  "task": 2,
+  "total_tasks": 3,
+  "status": "blocked",
+  "completed_tasks": [
+    {"id": 1, "name": "Scanner interface types + block message templates", "status": "done", "commit": "59ba2fa"}
+  ],
+  "remaining_tasks": [
+    {"id": 2, "name": "DataProtectionScanner (Presidio) + custom recognizers", "status": "in_progress", "progress": "custom_recognizers.py written but not committed; data_protection.py placeholder not yet replaced"},
+    {"id": 3, "name": "LLMGuardrailScanner (LLM Guard) implementation", "status": "not_started"}
+  ],
+  "blockers": [
+    {
+      "description": "llm-guard 0.3.10 class names differ from plan: PromptInjectionScanner is actually PromptInjection, JailbreakScanner is likely Jailbreak. Import test for jailbreak module timed out (loading torch/transformers models is slow). Need to verify all scanner class names and test initialization.",
+      "type": "technical",
+      "workaround": "Check llm_guard.input_scanners module for actual class names; adjust LLMGuardrailScanner wrapper accordingly"
+    },
+    {
+      "description": "llm-guard 0.3.10 requires torch==2.0.1 (no Python 3.13 wheel). Installed torch 2.12.0 + transformers 4.57.6 + onnxruntime 1.26.0 + llm-guard via --no-deps. Runtime compatibility with newer deps is unverified.",
+      "type": "technical",
+      "workaround": "torch 2.12 + transformers 4.57 installed; llm-guard --no-deps bypasses strict pins. Need to test if scanners actually initialize and run correctly with these versions."
+    }
+  ],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "Install torch 2.12.0 + transformers 4.57.6 + onnxruntime + llm-guard --no-deps to bypass Python 3.13 incompatibility", "rationale": "torch==2.0.1 has no Python 3.13 wheel; llm-guard strict pins cannot be satisfied. Relaxed deps approach allows same scanner functionality.", "phase": 2},
+    {"decision": "Keep original design intent: use llm-guard PromptInjection/Jailbreak/Toxicity scanners (not pattern-based substitute)", "rationale": "User explicitly required llm-guard capabilities for MVP, not deviation from design", "phase": 2}
+  ],
+  "uncommitted_files": ["backend/app/safety/custom_recognizers.py"],
+  "next_action": "1) Verify llm-guard scanner class names (PromptInjection, Jailbreak, etc.) with quick import test. 2) Test scanner initialization and basic scan. 3) If scanners work with relaxed deps, implement LLMGuardrailScanner wrapper. 4) If scanners fail, consider Python 3.12 venv as fallback.",
+  "context_notes": "llm-guard import test showed class name is PromptInjection (not PromptInjectionScanner as plan states). Jailbreak class name test timed out - torch model loading takes 30+ seconds on first run. The import itself succeeded for PromptInjection. Key unknown: do scanners actually run inference correctly with torch 2.12 + transformers 4.57 instead of torch 2.0.1 + transformers 4.38.2?"
+}
