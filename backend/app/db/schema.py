@@ -80,3 +80,26 @@ class AuditEvent(Base):
     risk_categories: Mapped[list] = mapped_column(JSON, nullable=False)
     policy_action: Mapped[str] = mapped_column(String(20), nullable=False)
     scanner_findings: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+class ModelConfig(Base):
+    __tablename__ = "model_configs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    provider_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    endpoint_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    api_key_encrypted: Mapped[str] = mapped_column(String(500), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(nullable=False, default=datetime.utcnow)
+
+
+class PolicyConfig(Base):
+    __tablename__ = "policy_configs"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    scanner_name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(nullable=False, default=True)
+    sensitivity: Mapped[str] = mapped_column(String(20), nullable=False, default="medium")
+    updated_at: Mapped[datetime] = mapped_column(nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -5,6 +5,8 @@ import AuthCallbackPage from "./features/auth/AuthCallbackPage";
 import UserInfo from "./features/auth/UserInfo";
 import AdminLayout from "./features/admin/AdminLayout";
 import AuditPage from "./features/admin/AuditPage";
+import ModelsPage from "./features/admin/ModelsPage";
+import PolicyPage from "./features/admin/PolicyPage";
 import ChatPage from "./features/chat/ChatPage";
 import { useAuthStore } from "./stores/authStore";
 
@@ -61,8 +63,8 @@ export default function AppRoutes() {
         >
           <Route index element={<Navigate to="/admin/audit" replace />} />
           <Route path="audit" element={<AuditPage />} />
-          <Route path="models" element={<div className="text-gray-500">模型配置 — 即将推出</div>} />
-          <Route path="policy" element={<div className="text-gray-500">安全策略 — 即将推出</div>} />
+          <Route path="models" element={<ModelsPage />} />
+          <Route path="policy" element={<PolicyPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
