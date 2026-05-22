@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api import admin, auth, chat, conversations
+from app.api import admin, auth, chat, chat_stream, conversations
 from app.db import init_db
 
 
@@ -21,6 +21,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(conversations.router, prefix="/api/conversations", tags=["conversations"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(chat_stream.router, prefix="/api/chat", tags=["chat-stream"])
 
 
 @app.get("/health")
