@@ -1,11 +1,13 @@
 import { useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { sendChatMessage, fetchConversationMessages } from "../../lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchConversationMessages } from "../../lib/api";
 import { useChatStore } from "../../stores/chatStore";
+import { useStreamChat } from "./useStreamChat";
 import ConversationSidebar from "./ConversationSidebar";
 import ModelSelector from "./ModelSelector";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
+import StreamingMessage from "./StreamingMessage";
 
 export default function ChatPage() {
   const queryClient = useQueryClient();
@@ -15,6 +17,9 @@ export default function ChatPage() {
   const setLoading = useChatStore((s) => s.setLoading);
   const activeConversationId = useChatStore((s) => s.activeConversationId);
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
+
+  const { streamMessage, isStreaming, streamContent, streamError, degraded, reset } =
+    useStreamChat();
 
   // Fetch messages when a conversation is selected
   const { data: conversationMessages } = useQuery({
@@ -52,14 +57,7 @@ export default function ChatPage() {
     }
   }, [activeConversationId, conversations, setSelectedModel]);
 
-  const sendMutation = useMutation({
-    mutationFn: ({ message, modelId }: { message: string; modelId: string }) =>
-      sendChatMessage(message, modelId, activeConversationId),
-    onMutate: () => setLoading(true),
-    onSettled: () => setLoading(false),
-  });
-
-  const handleSend = (message: string) => {
+  const handleSend = async (message: string) => {
     if (!selectedModel) return;
 
     addMessage({
@@ -68,57 +66,43 @@ export default function ChatPage() {
       content: message,
     });
 
-    sendMutation.mutate(
-      { message, modelId: selectedModel },
-      {
-        onSuccess: (response) => {
-          // Track new conversation
-          if (response.conversation_id && !activeConversationId) {
-            setActiveConversation(response.conversation_id);
-            // Re-add user message since setActiveConversation clears messages
-            useChatStore.getState().addMessage({
-              id: crypto.randomUUID(),
-              role: "user",
-              content: message,
-            });
-          }
+    setLoading(true);
+    reset();
 
-          if (response.status === "allowed") {
-            addMessage({
-              id: crypto.randomUUID(),
-              role: "model",
-              content: response.content,
-              modelId: response.model_id ?? undefined,
-              providerId: response.provider_id ?? undefined,
-            });
-          } else if (response.status === "blocked") {
-            addMessage({
-              id: crypto.randomUUID(),
-              role: "blocked",
-              content: response.content,
-              riskCategories: response.risk_categories ?? undefined,
-              revisionHint: response.revision_hint ?? undefined,
-            });
-          } else {
-            addMessage({
-              id: crypto.randomUUID(),
-              role: "error",
-              content: response.content,
-            });
-          }
+    const result = await streamMessage(message, selectedModel, activeConversationId);
 
-          // Refresh sidebar
-          queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        },
-        onError: (error) => {
-          addMessage({
-            id: crypto.randomUUID(),
-            role: "error",
-            content: error instanceof Error ? error.message : "Failed to send message",
-          });
-        },
+    setLoading(false);
+
+    if (result?.conversationId && !activeConversationId) {
+      setActiveConversation(result.conversationId);
+      useChatStore.getState().addMessage({
+        id: crypto.randomUUID(),
+        role: "user",
+        content: message,
+      });
+    }
+
+    if (streamError) {
+      addMessage({
+        id: crypto.randomUUID(),
+        role: "error",
+        content: streamError,
+      });
+    } else if (result) {
+      // Build final content from stream segments
+      const finalContent = streamContent
+        .map((seg) => (seg.type === "text" ? seg.content : seg.label))
+        .join("");
+      if (finalContent) {
+        addMessage({
+          id: result.messageId || crypto.randomUUID(),
+          role: "model",
+          content: finalContent,
+        });
       }
-    );
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
   return (
@@ -135,6 +119,22 @@ export default function ChatPage() {
 
         {/* Messages area */}
         <ChatMessages />
+
+        {/* Streaming message in progress */}
+        {isStreaming && streamContent.length > 0 && (
+          <div className="px-4 py-2">
+            <StreamingMessage segments={streamContent} isStreaming={isStreaming} />
+          </div>
+        )}
+
+        {/* Auto-degrade notice */}
+        {degraded && (
+          <div className="px-4 py-1">
+            <span className="text-sm italic text-gray-500">
+              连接中断，已切换为非流式模式
+            </span>
+          </div>
+        )}
 
         {/* Input area */}
         <ChatInput onSend={handleSend} />
