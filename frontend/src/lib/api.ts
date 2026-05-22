@@ -51,6 +51,20 @@ export async function apiClient<T>(
 
 // --- Chat API types ---
 
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  model_id: string;
+  updated_at: string;
+}
+
+export interface MessageResponse {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+}
+
 export interface ChatResponse {
   status: "allowed" | "blocked" | "fail_closed";
   content: string;
@@ -58,6 +72,8 @@ export interface ChatResponse {
   provider_id?: string;
   risk_categories?: string[];
   revision_hint?: string;
+  conversation_id?: string | null;
+  message_id?: string | null;
 }
 
 export interface ModelInfo {
@@ -72,12 +88,25 @@ export async function fetchChatModels(): Promise<ModelInfo[]> {
   return apiClient<ModelInfo[]>("/chat/models");
 }
 
+export async function fetchConversations(): Promise<ConversationSummary[]> {
+  return apiClient<ConversationSummary[]>("/conversations");
+}
+
+export async function fetchConversationMessages(id: string): Promise<MessageResponse[]> {
+  return apiClient<MessageResponse[]>(`/conversations/${id}/messages`);
+}
+
 export async function sendChatMessage(
   message: string,
-  modelId: string
+  modelId: string,
+  conversationId?: string | null
 ): Promise<ChatResponse> {
   return apiClient<ChatResponse>("/chat/send", {
     method: "POST",
-    body: JSON.stringify({ message, model_id: modelId }),
+    body: JSON.stringify({
+      message,
+      model_id: modelId,
+      ...(conversationId ? { conversation_id: conversationId } : {}),
+    }),
   });
 }

@@ -15,11 +15,14 @@ interface ChatState {
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
+  activeConversationId: string | null;
   setSelectedModel: (modelId: string | null) => void;
   addMessage: (message: ChatMessage) => void;
   clearMessages: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setActiveConversation: (id: string | null) => void;
+  startNewConversation: () => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -27,6 +30,7 @@ export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isLoading: false,
   error: null,
+  activeConversationId: null,
 
   setSelectedModel: (modelId) => set({ selectedModel: modelId }),
   addMessage: (message) =>
@@ -34,4 +38,6 @@ export const useChatStore = create<ChatState>((set) => ({
   clearMessages: () => set({ messages: [] }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
+  setActiveConversation: (id) => set({ activeConversationId: id, messages: [] }),
+  startNewConversation: () => set({ activeConversationId: null, messages: [] }),
 }));
