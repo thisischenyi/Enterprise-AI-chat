@@ -9,7 +9,6 @@ Three recognizers for enterprise-specific PII:
 from __future__ import annotations
 
 from presidio_analyzer import Pattern, PatternRecognizer, RecognizerResult
-from presidio_analyzer.context import ContextWordExtractor
 
 
 class EmployeeIdRecognizer(PatternRecognizer):
@@ -19,7 +18,7 @@ class EmployeeIdRecognizer(PatternRecognizer):
         Pattern(
             name="employee_id",
             regex=r"EMP-\d{4}",
-            strength=0.5,
+            score=0.5,
         ),
     ]
 
@@ -51,7 +50,7 @@ class ProjectCodeRecognizer(PatternRecognizer):
         Pattern(
             name="project_code",
             regex=r"PRJ-[A-Z0-9]{4}",
-            strength=0.5,
+            score=0.5,
         ),
     ]
 
@@ -108,7 +107,7 @@ class ChineseNationalIdRecognizer(PatternRecognizer):
         Pattern(
             name="chinese_national_id",
             regex=r"\d{17}[\dXx]",
-            strength=0.3,  # Base strength — boosted by checksum and context
+            score=0.3,  # Base score — boosted by checksum and context
         ),
     ]
 
@@ -139,11 +138,11 @@ class ChineseNationalIdRecognizer(PatternRecognizer):
         for result in results:
             candidate = text[result.start:result.end]
             if _validate_chinese_national_id_checksum(candidate):
-                result.score = self._calculate_score(result.score, nlp_artifacts, text, result.start, result.end)
+                result.score = 0.85  # High confidence — checksum valid
             else:
-                result.score = 0.01  # Checksum failed — likely random digits, not a real ID
+                result.score = 0.01  # Checksum failed — likely random digits
 
-            if result.score >= self.MINIMUM_SCORE:
+            if result.score >= 0.1:
                 validated_results.append(result)
 
         return validated_results
