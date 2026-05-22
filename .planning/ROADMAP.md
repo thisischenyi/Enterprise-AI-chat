@@ -67,8 +67,15 @@ Wave 2 *(blocked on Wave 1 completion)*
   2. Employee can resume a past conversation from the conversation list and continue chatting
   3. Database stores only allowed-through message content — blocked content never appears in conversation records
   4. Blocked messages generate audit event entries but no conversation message rows in the database
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 03-01-PLAN.md — Backend conversation persistence: DB models, repository, API endpoints, chat send extension with storage boundary
+- [ ] 03-02-PLAN.md — Frontend conversation sidebar + resume + new conversation flow
+
+Wave 1 *(03-01: backend models + API)*
+Wave 2 *(03-02: frontend, depends on 03-01)*
 
 ### Phase 4: Streaming & Admin Dashboard
 **Goal**: Chat responses stream with safety buffering, and admins can view audit data and manage configuration through a dashboard
@@ -92,5 +99,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Auth | 3/3 | Complete   | 2026-05-21 |
 | 2. Safety Pipeline & Chat | 0/4 | Planned | - |
-| 3. Conversation History & Chat Interface | 0/? | Not started | - |
+| 3. Conversation History & Chat Interface | 0/2 | Planned | - |
 | 4. Streaming & Admin Dashboard | 0/? | Not started | - |
