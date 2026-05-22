@@ -1,38 +1,47 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-21T14:25:57.148Z",
-  "phase": 2,
-  "phase_name": "Safety Pipeline & Chat",
-  "phase_dir": ".planning/phases/02-safety-pipeline-chat",
-  "plan": 1,
-  "task": 2,
-  "total_tasks": 3,
-  "status": "blocked",
+  "timestamp": "2026-05-22T11:48:13.000Z",
+  "phase": 4,
+  "phase_name": "Streaming & Admin Dashboard",
+  "phase_dir": ".planning/phases/04-streaming-admin-dashboard",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused_bug_fixing",
   "completed_tasks": [
-    {"id": 1, "name": "Scanner interface types + block message templates", "status": "done", "commit": "59ba2fa"}
+    {"id": 1, "name": "Fix backend startup (sse_starlette missing)", "status": "done"},
+    {"id": 2, "name": "Fix post-login redirect (Phase 2 placeholder)", "status": "done"},
+    {"id": 3, "name": "Fix model discovery (DASHSCOPE_API_KEY + QWEN_MODEL env vars)", "status": "done"},
+    {"id": 4, "name": "Fix stale closure bug — assistant response never displayed after streaming", "status": "done"},
+    {"id": 5, "name": "Fix 403 loop — stale activeConversationId cleared on forbidden response", "status": "done"}
   ],
   "remaining_tasks": [
-    {"id": 2, "name": "DataProtectionScanner (Presidio) + custom recognizers", "status": "in_progress", "progress": "custom_recognizers.py written but not committed; data_protection.py placeholder not yet replaced"},
-    {"id": 3, "name": "LLMGuardrailScanner (LLM Guard) implementation", "status": "not_started"}
+    {"id": 6, "name": "Commit 5 modified files", "status": "not_started"},
+    {"id": 7, "name": "Human test: send chat message and verify streaming response appears", "status": "not_started"},
+    {"id": 8, "name": "Human test: SSE auto-degrade fallback", "status": "not_started"},
+    {"id": 9, "name": "Human test: admin audit dashboard filters and pagination", "status": "not_started"},
+    {"id": 10, "name": "Human test: add/edit model provider and verify masked key display", "status": "not_started"}
   ],
-  "blockers": [
+  "blockers": [],
+  "human_actions_pending": [
     {
-      "description": "llm-guard 0.3.10 class names differ from plan: PromptInjectionScanner is actually PromptInjection, JailbreakScanner is likely Jailbreak. Import test for jailbreak module timed out (loading torch/transformers models is slow). Need to verify all scanner class names and test initialization.",
-      "type": "technical",
-      "workaround": "Check llm_guard.input_scanners module for actual class names; adjust LLMGuardrailScanner wrapper accordingly"
-    },
-    {
-      "description": "llm-guard 0.3.10 requires torch==2.0.1 (no Python 3.13 wheel). Installed torch 2.12.0 + transformers 4.57.6 + onnxruntime 1.26.0 + llm-guard via --no-deps. Runtime compatibility with newer deps is unverified.",
-      "type": "technical",
-      "workaround": "torch 2.12 + transformers 4.57 installed; llm-guard --no-deps bypasses strict pins. Need to test if scanners actually initialize and run correctly with these versions."
+      "action": "Run frontend dev server and test chat end-to-end: send a message, verify assistant response appears",
+      "context": "Bug fixes applied this session. Dev server should have auto-reloaded via HMR.",
+      "blocking": true
     }
   ],
-  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Install torch 2.12.0 + transformers 4.57.6 + onnxruntime + llm-guard --no-deps to bypass Python 3.13 incompatibility", "rationale": "torch==2.0.1 has no Python 3.13 wheel; llm-guard strict pins cannot be satisfied. Relaxed deps approach allows same scanner functionality.", "phase": 2},
-    {"decision": "Keep original design intent: use llm-guard PromptInjection/Jailbreak/Toxicity scanners (not pattern-based substitute)", "rationale": "User explicitly required llm-guard capabilities for MVP, not deviation from design", "phase": 2}
+    {"decision": "streamMessage() now returns segments[] in StreamResult", "rationale": "ChatPage.handleSend read streamContent state after await — stale closure always empty. Fix: accumulate in local array and return via result.segments.", "phase": 4},
+    {"decision": "403 on conversation fetch clears activeConversationId", "rationale": "Stale conversation ID from previous user session caused repeated 403 loop. Effect watches conversationError and calls setActiveConversation(null) on '403'.", "phase": 4},
+    {"decision": "APIKEY.env loaded via load_dotenv in main.py; DASHSCOPE_API_KEY=sk-934aae3f65d9448ba1d7120dd486cbf5, QWEN_MODEL=qwen3.6-plus", "rationale": "Model credentials stored in gitignored APIKEY.env at project root.", "phase": 4}
   ],
-  "uncommitted_files": ["backend/app/safety/custom_recognizers.py"],
-  "next_action": "1) Verify llm-guard scanner class names (PromptInjection, Jailbreak, etc.) with quick import test. 2) Test scanner initialization and basic scan. 3) If scanners work with relaxed deps, implement LLMGuardrailScanner wrapper. 4) If scanners fail, consider Python 3.12 venv as fallback.",
-  "context_notes": "llm-guard import test showed class name is PromptInjection (not PromptInjectionScanner as plan states). Jailbreak class name test timed out - torch model loading takes 30+ seconds on first run. The import itself succeeded for PromptInjection. Key unknown: do scanners actually run inference correctly with torch 2.12 + transformers 4.57 instead of torch 2.0.1 + transformers 4.38.2?"
+  "uncommitted_files": [
+    "backend/app/main.py",
+    "backend/app/models/providers.py",
+    "frontend/src/features/chat/ChatPage.tsx",
+    "frontend/src/features/chat/useStreamChat.ts",
+    "frontend/src/routes.tsx"
+  ],
+  "next_action": "git add those 5 files and commit 'fix: streaming response display and stale session handling', then human-test chat end-to-end",
+  "context_notes": "Phase 4 plans are all done (4/4 verified). This session was live bug fixing during human testing. Backend streaming works (SSE 200 OK, model responds, DB written). Bugs were frontend only: stale closure + stale conversation ID. Both fixed. APIKEY.env contains DashScope credentials."
 }

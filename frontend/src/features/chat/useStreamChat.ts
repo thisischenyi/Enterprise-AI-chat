@@ -9,6 +9,8 @@ export type StreamSegment =
 interface StreamResult {
   conversationId?: string;
   messageId?: string;
+  segments: StreamSegment[];
+  error?: string | null;
 }
 
 export function useStreamChat() {
@@ -58,6 +60,7 @@ export function useStreamChat() {
           return {
             conversationId: fallback.conversation_id ?? undefined,
             messageId: fallback.message_id ?? undefined,
+            segments: [],
           };
         }
 
@@ -66,7 +69,9 @@ export function useStreamChat() {
           .pipeThrough(new EventSourceParserStream());
 
         const reader = stream.getReader();
-        let result: StreamResult = {};
+        let result: StreamResult = { segments: [] };
+        const segments: StreamSegment[] = [];
+        let errorMessage: string | null = null;
 
         // 30s timeout
         const timeout = setTimeout(() => {
@@ -82,22 +87,22 @@ export function useStreamChat() {
             const data = JSON.parse(event.data);
 
             if (event.event === "chunk") {
-              setStreamContent((prev) => [
-                ...prev,
-                { type: "text", content: data.content },
-              ]);
+              const seg: StreamSegment = { type: "text", content: data.content };
+              segments.push(seg);
+              setStreamContent((prev) => [...prev, seg]);
             } else if (event.event === "redacted") {
-              setStreamContent((prev) => [
-                ...prev,
-                { type: "redacted", label: data.label, category: data.category },
-              ]);
+              const seg: StreamSegment = { type: "redacted", label: data.label, category: data.category };
+              segments.push(seg);
+              setStreamContent((prev) => [...prev, seg]);
             } else if (event.event === "done") {
               result = {
                 conversationId: data.conversation_id,
                 messageId: data.message_id,
+                segments,
               };
               break;
             } else if (event.event === "error") {
+              errorMessage = data.message;
               setStreamError(data.message);
               break;
             }
@@ -108,7 +113,7 @@ export function useStreamChat() {
         }
 
         setIsStreaming(false);
-        return result;
+        return { ...result, error: errorMessage };
       } catch (err) {
         if ((err as Error).name === "AbortError") {
           // Timeout — auto-degrade
@@ -118,6 +123,7 @@ export function useStreamChat() {
           return {
             conversationId: fallback.conversation_id ?? undefined,
             messageId: fallback.message_id ?? undefined,
+            segments: [],
           };
         }
         setStreamError(

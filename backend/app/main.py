@@ -1,11 +1,18 @@
 """Enterprise AI Chat MVP — FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
+import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from app.api import admin, auth, chat, chat_stream, conversations
 from app.db import init_db
+
+# Load APIKEY.env from project root (two levels up from this file's package)
+_project_root = Path(__file__).parent.parent.parent
+load_dotenv(_project_root / "APIKEY.env")
 
 
 @asynccontextmanager

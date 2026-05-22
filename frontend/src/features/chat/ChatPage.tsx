@@ -22,11 +22,18 @@ export default function ChatPage() {
     useStreamChat();
 
   // Fetch messages when a conversation is selected
-  const { data: conversationMessages } = useQuery({
+  const { data: conversationMessages, error: conversationError } = useQuery({
     queryKey: ["conversations", activeConversationId, "messages"],
     queryFn: () => fetchConversationMessages(activeConversationId!),
     enabled: !!activeConversationId,
   });
+
+  // Clear stale conversation if we get a 403 (e.g. different user session)
+  useEffect(() => {
+    if (conversationError && conversationError.message.includes("403")) {
+      setActiveConversation(null);
+    }
+  }, [conversationError, setActiveConversation]);
 
   // Populate messages when conversation data loads
   useEffect(() => {
@@ -82,15 +89,17 @@ export default function ChatPage() {
       });
     }
 
-    if (streamError) {
+    if (!result) {
+      // Stream failed (error was set inside hook state, nothing to display here)
+    } else if (result.error) {
       addMessage({
         id: crypto.randomUUID(),
         role: "error",
-        content: streamError,
+        content: result.error,
       });
     } else if (result) {
-      // Build final content from stream segments
-      const finalContent = streamContent
+      // Use result.segments (not streamContent state) to avoid stale closure
+      const finalContent = result.segments
         .map((seg) => (seg.type === "text" ? seg.content : seg.label))
         .join("");
       if (finalContent) {

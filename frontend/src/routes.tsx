@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import LoginPage from "./features/auth/LoginPage";
 import MockOIDCPage from "./features/auth/MockOIDCPage";
 import AuthCallbackPage from "./features/auth/AuthCallbackPage";
-import UserInfo from "./features/auth/UserInfo";
 import AdminLayout from "./features/admin/AdminLayout";
 import AuditPage from "./features/admin/AuditPage";
 import ModelsPage from "./features/admin/ModelsPage";
@@ -25,7 +24,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
   if (!user || user.role !== "admin") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/chat" replace />;
   }
   return <>{children}</>;
 }
@@ -41,7 +40,7 @@ export default function AppRoutes() {
           path="/"
           element={
             <ProtectedRoute>
-              <UserInfo />
+              <Navigate to="/chat" replace />
             </ProtectedRoute>
           }
         />
@@ -66,7 +65,7 @@ export default function AppRoutes() {
           <Route path="models" element={<ModelsPage />} />
           <Route path="policy" element={<PolicyPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/chat" replace />} />
       </Routes>
     </BrowserRouter>
   );

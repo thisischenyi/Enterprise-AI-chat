@@ -43,7 +43,8 @@ class ProviderRegistry:
 
     def _init_providers(self) -> None:
         """Create provider instances for available credentials."""
-        qwen_key = os.getenv("QWEN_API_KEY", "")
+        # Support QWEN_API_KEY or DASHSCOPE_API_KEY (both refer to Qwen/DashScope)
+        qwen_key = os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY", "")
         if qwen_key:
             from app.models.qwen import QwenProvider
 
@@ -51,15 +52,18 @@ class ProviderRegistry:
                 "QWEN_BASE_URL",
                 "https://dashscope.aliyuncs.com/compatible-mode/v1",
             )
-            provider = QwenProvider(api_key=qwen_key, base_url=base_url)
+            model_id = os.getenv("QWEN_MODEL", "qwen-plus")
+            provider = QwenProvider(api_key=qwen_key, base_url=base_url, model_id=model_id)
             self._providers[provider.model_id] = provider
 
-        local_url = os.getenv("LOCAL_LLM_BASE_URL", "")
-        if local_url:
+        # Support OPENAI_API_BASE / OPENAI_API_KEY for generic OpenAI-compatible endpoints
+        openai_url = os.getenv("OPENAI_API_BASE") or os.getenv("LOCAL_LLM_BASE_URL", "")
+        if openai_url:
             from app.models.openai_compatible import OpenAICompatibleProvider
 
-            api_key = os.getenv("LOCAL_LLM_API_KEY", "ollama")
-            provider = OpenAICompatibleProvider(base_url=local_url, api_key=api_key)
+            api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LOCAL_LLM_API_KEY", "ollama")
+            model_id = os.getenv("OPENAI_MODEL_NAME") or os.getenv("LOCAL_LLM_MODEL_ID", "local-model")
+            provider = OpenAICompatibleProvider(base_url=openai_url, api_key=api_key, model_id=model_id)
             self._providers[provider.model_id] = provider
 
     def get_provider(self, model_id: str) -> ModelProvider:
