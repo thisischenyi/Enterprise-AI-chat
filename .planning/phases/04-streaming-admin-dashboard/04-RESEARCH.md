@@ -383,17 +383,13 @@ class PolicyConfig(Base):
 | A2 | sse-starlette EventSourceResponse accepts async generator yielding dicts with "event" and "data" keys | Code Examples | May need different yield format |
 | A3 | Simple regex sentence splitting is adequate for MVP | Patterns | May need refinement if models produce unusual punctuation |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Model provider streaming API format**
-   - What we know: Qwen uses OpenAI-compatible API at dashscope. Current code uses `stream: False`.
-   - What's unclear: Exact streaming response format (likely OpenAI SSE format with `data: {"choices":[{"delta":{"content":"..."}}]}`)
-   - Recommendation: Set `stream: True` in provider, parse with httpx `aiter_lines()`. Test with actual Qwen endpoint.
+1. **Model provider streaming API format** — RESOLVED
+   - Resolution: Use OpenAI-compatible SSE format (`data: {"choices":[{"delta":{"content":"..."}}]}`). Set `stream: True` in httpx request, parse with `aiter_lines()`. Confirmed by Qwen/DashScope docs compatibility.
 
-2. **API key encryption for MVP**
-   - What we know: D-ADM11 says masked display, cannot view old value.
-   - What's unclear: Whether to use proper encryption (Fernet) or just store hashed with last4 visible.
-   - Recommendation: Use Python `cryptography.fernet` with app-level secret key from env var. Simple and reversible (needed to actually USE the key for API calls).
+2. **API key encryption for MVP** — RESOLVED
+   - Resolution: Use `cryptography.fernet` with app-level `ENCRYPTION_KEY` env var. Reversible encryption needed since keys must be decrypted for API calls. Store encrypted blob + last4 plaintext for display masking.
 
 ## Validation Architecture
 
