@@ -13,7 +13,7 @@ This roadmap delivers a safety-first enterprise AI chat application in four phas
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Auth** - Authentication foundation with mock OIDC and role-based access (completed 2026-05-21)
-- [ ] **Phase 2: Safety Pipeline & Chat** - Core safety pipeline, model gateway, non-streaming chat, and automated test coverage
+- [x] **Phase 2: Safety Pipeline & Chat** - Core safety pipeline, model gateway, non-streaming chat, and automated test coverage (completed 2026-05-22)
 - [x] **Phase 3: Conversation History & Chat Interface** - Conversation browsing, resuming, and allowed-through content storage (completed 2026-05-22)
 - [ ] **Phase 4: Streaming & Admin Dashboard** - Streaming safety buffer and admin configuration/audit dashboard
 
@@ -49,10 +49,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Scanner Interfaces + DataProtectionScanner + LLMGuardrailScanner + Custom Recognizers + Block Messages (Wave 1)
-- [ ] 02-02-PLAN.md — SafetyPipeline + SafetyPolicy + AuditEvent + AuditRepository (Wave 1, depends on 02-01)
-- [ ] 02-03-PLAN.md — Model Providers + Chat API + Frontend Chat Page (Wave 2, depends on 02-01 + 02-02)
-- [ ] 02-04-PLAN.md — Integration Tests + Test Fixtures + Chat API Tests (Wave 2, depends on 02-01 + 02-02 + 02-03)
+- [x] 02-01-PLAN.md — Scanner Interfaces + DataProtectionScanner + LLMGuardrailScanner + Custom Recognizers + Block Messages (Wave 1)
+- [x] 02-02-PLAN.md — SafetyPipeline + SafetyPolicy + AuditEvent + AuditRepository (Wave 1, depends on 02-01)
+- [x] 02-03-PLAN.md — Model Providers + Chat API + Frontend Chat Page (Wave 2, depends on 02-01 + 02-02)
+- [x] 02-04-PLAN.md — Integration Tests + Test Fixtures + Chat API Tests (Wave 2, depends on 02-01 + 02-02 + 02-03)
 
 Wave 1 *(02-01 and 02-02 can start together, 02-02 depends on 02-01 scanner interfaces)*
 Wave 2 *(blocked on Wave 1 completion)*
