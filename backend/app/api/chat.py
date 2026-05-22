@@ -55,9 +55,25 @@ class ModelInfo(BaseModel):
 
 
 def get_safety_pipeline() -> SafetyPipeline:
-    """Create SafetyPipeline with no scanners for MVP (scanners added when deps available)."""
+    """Create SafetyPipeline with real scanners, graceful fallback if deps unavailable."""
+    scanners = []
+
+    try:
+        from app.safety.data_protection import DataProtectionScanner
+        scanners.append(DataProtectionScanner())
+    except Exception as e:
+        logger.warning("DataProtectionScanner unavailable: %s", e)
+
+    try:
+        import app.safety.torch_compat  # noqa: F401 — must patch before llm_guard
+        from app.safety.llm_guardrails import LLMGuardrailScanner
+        scanners.append(LLMGuardrailScanner())
+    except Exception as e:
+        logger.warning("LLMGuardrailScanner unavailable: %s", e)
+
+    logger.info("SafetyPipeline initialized with %d scanner(s)", len(scanners))
     policy = SafetyPolicy()
-    return SafetyPipeline(scanners=[], policy=policy, timeout=30.0)
+    return SafetyPipeline(scanners=scanners, policy=policy, timeout=30.0)
 
 
 # --- Endpoints ---

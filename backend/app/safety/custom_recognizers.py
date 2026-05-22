@@ -35,6 +35,7 @@ class EmployeeIdRecognizer(PatternRecognizer):
 
     def __init__(self, name: str = "EmployeeIdRecognizer", **kwargs):
         super().__init__(
+            supported_entity="EMPLOYEE_ID",
             name=name,
             patterns=self.PATTERNS,
             context=self.CONTEXT,
@@ -65,6 +66,7 @@ class ProjectCodeRecognizer(PatternRecognizer):
 
     def __init__(self, name: str = "ProjectCodeRecognizer", **kwargs):
         super().__init__(
+            supported_entity="PROJECT_CODE",
             name=name,
             patterns=self.PATTERNS,
             context=self.CONTEXT,
@@ -123,6 +125,7 @@ class ChineseNationalIdRecognizer(PatternRecognizer):
 
     def __init__(self, name: str = "ChineseNationalIdRecognizer", **kwargs):
         super().__init__(
+            supported_entity="CHINESE_NATIONAL_ID",
             name=name,
             patterns=self.PATTERNS,
             context=self.CONTEXT,
