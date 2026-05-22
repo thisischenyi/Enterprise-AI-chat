@@ -48,3 +48,36 @@ export async function apiClient<T>(
 
   return response.json() as Promise<T>;
 }
+
+// --- Chat API types ---
+
+export interface ChatResponse {
+  status: "allowed" | "blocked" | "fail_closed";
+  content: string;
+  model_id?: string;
+  provider_id?: string;
+  risk_categories?: string[];
+  revision_hint?: string;
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description: string;
+}
+
+// --- Chat API functions ---
+
+export async function fetchChatModels(): Promise<ModelInfo[]> {
+  return apiClient<ModelInfo[]>("/chat/models");
+}
+
+export async function sendChatMessage(
+  message: string,
+  modelId: string
+): Promise<ChatResponse> {
+  return apiClient<ChatResponse>("/chat/send", {
+    method: "POST",
+    body: JSON.stringify({ message, model_id: modelId }),
+  });
+}

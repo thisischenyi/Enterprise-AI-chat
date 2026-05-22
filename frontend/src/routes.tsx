@@ -4,6 +4,7 @@ import MockOIDCPage from "./features/auth/MockOIDCPage";
 import AuthCallbackPage from "./features/auth/AuthCallbackPage";
 import UserInfo from "./features/auth/UserInfo";
 import AdminStubPage from "./features/admin/AdminStubPage";
+import ChatPage from "./features/chat/ChatPage";
 import { useAuthStore } from "./stores/authStore";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <UserInfo />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
             </ProtectedRoute>
           }
         />
