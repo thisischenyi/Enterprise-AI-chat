@@ -87,7 +87,12 @@ Wave 2 *(03-02: frontend, depends on 03-01)*
   2. Admin can view audit event metadata (risk categories, policy actions, timestamps, user and model info) through a dashboard UI
   3. Admin can configure model providers and credentials through a dashboard UI
   4. Admin can configure policy thresholds and enabled scanner modules through a dashboard UI
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Streaming chat with sentence-based safety buffer and inline redaction
+- [ ] 04-02-PLAN.md — Admin audit viewer with stats, filters, and paginated table
+- [ ] 04-03-PLAN.md — Admin model provider and policy scanner configuration
 **UI hint**: yes
 
 ## Progress
@@ -100,4 +105,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation & Auth | 3/3 | Complete   | 2026-05-21 |
 | 2. Safety Pipeline & Chat | 0/4 | Planned | - |
 | 3. Conversation History & Chat Interface | 0/2 | Planned | - |
-| 4. Streaming & Admin Dashboard | 0/? | Not started | - |
+| 4. Streaming & Admin Dashboard | 0/3 | Planned | - |
