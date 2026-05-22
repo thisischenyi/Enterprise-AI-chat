@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Auth** - Authentication foundation with mock OIDC and role-based access (completed 2026-05-21)
 - [ ] **Phase 2: Safety Pipeline & Chat** - Core safety pipeline, model gateway, non-streaming chat, and automated test coverage
-- [ ] **Phase 3: Conversation History & Chat Interface** - Conversation browsing, resuming, and allowed-through content storage
+- [x] **Phase 3: Conversation History & Chat Interface** - Conversation browsing, resuming, and allowed-through content storage (completed 2026-05-22)
 - [ ] **Phase 4: Streaming & Admin Dashboard** - Streaming safety buffer and admin configuration/audit dashboard
 
 ## Phase Details
@@ -71,8 +71,8 @@ Wave 2 *(blocked on Wave 1 completion)*
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01-PLAN.md — Backend conversation persistence: DB models, repository, API endpoints, chat send extension with storage boundary
-- [ ] 03-02-PLAN.md — Frontend conversation sidebar + resume + new conversation flow
+- [x] 03-01-PLAN.md — Backend conversation persistence: DB models, repository, API endpoints, chat send extension with storage boundary
+- [x] 03-02-PLAN.md — Frontend conversation sidebar + resume + new conversation flow
 
 Wave 1 *(03-01: backend models + API)*
 Wave 2 *(03-02: frontend, depends on 03-01)*
