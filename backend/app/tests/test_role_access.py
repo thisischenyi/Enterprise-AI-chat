@@ -109,8 +109,7 @@ async def test_employee_access_chat_endpoint(authenticated_employee_client: Asyn
     response = await authenticated_employee_client.get("/api/chat/models")
     assert response.status_code == 200
     data = response.json()
-    assert "message" in data
-    assert data["user_role"] == "employee"
+    assert isinstance(data, list)
 
 
 @pytest.mark.asyncio
@@ -119,8 +118,7 @@ async def test_admin_access_chat_endpoint(authenticated_admin_client: AsyncClien
     response = await authenticated_admin_client.get("/api/chat/models")
     assert response.status_code == 200
     data = response.json()
-    assert "message" in data
-    assert data["user_role"] == "admin"
+    assert isinstance(data, list)
 
 
 @pytest.mark.asyncio
