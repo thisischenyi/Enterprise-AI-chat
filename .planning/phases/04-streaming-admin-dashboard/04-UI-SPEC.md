@@ -47,11 +47,12 @@ Exceptions: none
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 14px | 400 | 1.5 |
-| Label | 12px | 500 | 1.4 |
+| Body / Label | 14px | 400 (body), 500 (label) | 1.5 |
 | Heading | 16px | 600 | 1.3 |
 | Display | 20px | 600 | 1.2 |
 | Stat value | 28px | 600 | 1.1 |
+
+Labels use 14px at weight 500 to differentiate from body text at weight 400. This keeps the type scale to 4 sizes.
 
 ---
 
@@ -67,6 +68,16 @@ Exceptions: none
 | Success | green-600 (#16a34a) | Allow action badge, trend positive, enabled toggle |
 
 Accent reserved for: Save button fill, active admin sidebar left border, pagination active page number
+
+---
+
+## Focal Points
+
+| Page | Primary Visual Anchor | Rationale |
+|------|----------------------|-----------|
+| Audit page | Stat cards row | First element below heading; large stat values (28px) draw the eye immediately |
+| Models page | Model card grid | 2-column grid with card elevation is the dominant visual mass |
+| Policy page | Scanner toggle list | Repeated toggle pattern creates rhythm as focal anchor |
 
 ---
 
@@ -94,7 +105,7 @@ Accent reserved for: Save button fill, active admin sidebar left border, paginat
 |---------|------|
 | Streaming message bubble | Same as assistant message (left-aligned, bg-white border, rounded-lg) |
 | Typing indicator | Blinking cursor character at end of streaming text |
-| Redaction tag | Inline span, bg-red-50 text-red-700 border border-red-200 rounded px-2 py-0.5 text-12px font-500 |
+| Redaction tag | Inline span, bg-red-50 text-red-700 border border-red-200 rounded px-2 py-0.5 text-14px font-500 |
 | Redaction labels | `[PII已过滤]`, `[机密信息已过滤]`, `[策略违规已过滤]` |
 | Stream complete | Cursor removed, message finalized |
 | Stream error | Gray italic text: "连接中断，已切换为非流式模式" |
@@ -151,13 +162,14 @@ Accent reserved for: Save button fill, active admin sidebar left border, paginat
 | Action badge: block | "拦截" (red) |
 | Action badge: fail_closed | "兜底拦截" (amber) |
 | Model config heading | "模型供应商配置" |
-| Model card CTA | "编辑" |
+| Model card CTA | "编辑模型" |
 | Add model CTA | "添加模型" |
-| Modal: save | "保存" |
-| Modal: cancel | "取消" |
+| Modal: save | "保存配置" |
+| Modal: cancel | "放弃修改" |
 | API key display | "••••{last4}" |
 | API key field label | "API Key（留空则不修改）" |
 | Policy config heading | "安全扫描器配置" |
+| Policy card CTA | "编辑策略" |
 | Scanner toggle label | "启用" |
 | Sensitivity label | "敏感度：低 / 中 / 高" |
 | Empty audit table | "暂无审计事件" |
