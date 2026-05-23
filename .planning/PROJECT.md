@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An enterprise AI chat web application that lets authenticated employees chat with approved LLMs (Alibaba Bailian Qwen and local OpenAI-compatible models) while enforcing input and output safety controls. The MVP is a demo prototype to prove that AI chat can be used safely in an enterprise environment — blocking sensitive content before model calls and blocking unsafe model responses before display.
+An enterprise AI chat web application that lets authenticated employees chat with approved LLMs (Alibaba Bailian Qwen and local OpenAI-compatible models) while enforcing input and output safety controls. The MVP proves that AI chat can be used safely in an enterprise environment — blocking sensitive content before model calls and blocking unsafe model responses before display, with bilingual (Chinese + English) detection and Chinese-language block messages.
 
 Primary users are internal employees. Admin users configure models, policies, and view audit metadata.
 
@@ -14,85 +14,74 @@ Prove that employees can use AI chat safely in a controlled enterprise environme
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Employee OIDC authentication (mock OIDC) — v1.0
+- ✓ Role-based access (employee/admin) — v1.0
+- ✓ Model provider selection (Qwen + OpenAI-compatible) — v1.0
+- ✓ Streaming chat with safety buffer — v1.0
+- ✓ Input safety filtering (PII, injection, harmful, compliance) — v1.0
+- ✓ Output safety filtering before display — v1.0
+- ✓ Full-content block with category-specific Chinese messages — v1.0
+- ✓ Audit metadata-only logging — v1.0
+- ✓ Fail-closed scanner semantics — v1.0
+- ✓ Custom Presidio recognizers (Chinese national ID, employee ID, project code, income) — v1.0
+- ✓ Conversation history browse/resume — v1.0
+- ✓ Only allowed-through content stored — v1.0
+- ✓ Admin audit viewer dashboard — v1.0
+- ✓ Admin model provider config (DB-first, encrypted API keys) — v1.0
+- ✓ Admin policy/scanner config — v1.0
+- ✓ Automated tests for allow/block/fail-closed paths — v1.0
 
 ### Active
 
-- [ ] Employee can sign in through enterprise OIDC authentication (mock OIDC for MVP)
-- [ ] Employee can select an allowed model provider (Qwen or local OpenAI-compatible)
-- [ ] Employee can send a chat message and receive a streamed response with safety buffering
-- [ ] Unsafe or sensitive user input is blocked before any model call, with a safe explanation message
-- [ ] Unsafe or sensitive model output is blocked before display, with a safe explanation message
-- [ ] Block messages explain the risk category and action taken without echoing sensitive content
-- [ ] Employee can browse and resume past conversations (only allowed-through content stored)
-- [ ] Audit events are created for allowed and blocked interactions
-- [ ] Audit events contain metadata and risk categories but not raw sensitive content
-- [ ] Admin can view audit event metadata through a dashboard UI
-- [ ] Admin can configure model providers and credentials through a dashboard UI
-- [ ] Admin can configure policy thresholds and enabled scanner modules through a dashboard UI
-- [ ] Automated tests prove the main allow/block paths
+- [ ] Conversation delete functionality (frontend + backend)
+- [ ] Real OIDC integration when enterprise IDP confirmed
+- [ ] Llama Guard 3 model-based guardrails as inference server
+- [ ] Streaming buffer threshold tuning (latency vs safety)
 
 ### Out of Scope
 
 - Full model provider marketplace — complex, not core to proving safety pipeline
-- Complex multi-provider routing (cost, latency, policy-based) — single model selection sufficient for demo
+- Multi-provider routing (cost, latency, policy-based) — single model selection sufficient for demo
 - Automatic provider fallback — adds complexity without proving safety value
 - Local redaction with partial display — MVP blocks full content, no partial content shown
-- Custom training or fine-tuning of filtering models — use existing open-source libraries
+- Custom training or fine-tuning of filtering models — use existing open-source models
 - Commercial DLP integrations — beyond MVP scope
 - Multi-tenant organization management — single enterprise context
 - Advanced analytics dashboards — audit viewer sufficient for demo
-- Long-term conversation memory using raw prompt storage — only allowed-through content stored
+- Raw prompt/output storage — database and logs must never contain sensitive content
 - Fine-grained RBAC beyond employee/admin — two roles sufficient for MVP
-- Self-service provider marketplace — admin-only configuration
 
 ## Context
 
-- Tech stack: React + TypeScript frontend, Python + FastAPI backend, SQLite (MVP) / PostgreSQL (production) database
-- Model providers: Alibaba Bailian Qwen (cloud) and local OpenAI-compatible API (self-hosted)
-- Safety filtering uses Presidio (PII detection, data classification) and Llama Guard / LLM Guard (jailbreak, prompt injection, harmful content, compliance)
-- Both filtering libraries wrapped behind internal interfaces (DataProtectionScanner, LLMGuardrailScanner) so implementations can change
-- Authentication starts with mock OIDC that mimics the real OIDC flow; real enterprise IDP adapter swapped in later
-- Frontend never calls model providers directly — all model calls and safety checks go through the backend
-- Streaming responses with safety buffering: model output streams to users but safety checks run with a buffer to block unsafe content before it's displayed
-- Enterprise identity provider not yet determined — OIDC chosen as first integration path, LDAP/SSO as future adapter
-- Exact filtering library versions and deployment models need confirmation during implementation planning
+- Shipped v1.0 with ~4,500 LOC Python + ~3,000 LOC TypeScript
+- Tech stack: React 19 + TypeScript + Vite, Python 3.12 + FastAPI, SQLite WAL (aiosqlite), SQLAlchemy 2 async ORM
+- Safety: Presidio (regex-only PII detection, score ≥ 0.7) + Qwen3Guard-Gen-0.6B (generative guard model, Chinese + English) + 33 bilingual regex rules
+- Auth: Mock OIDC with session-based tokens (itsdangerous), role-based access (employee/admin)
+- Admin: DB-first model config with Fernet-encrypted API keys, policy scanner toggle, audit event viewer
+- Streaming: SentenceBuffer (regex sentence splitting) + per-sentence output scan + SSE events
+- Database: SQLite WAL mode for MVP, PostgreSQL for production (same SQLAlchemy ORM, easy migration)
+- Pushed to GitHub: https://github.com/thisischenyi/Enterprise-AI-chat.git
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| Mock OIDC first | Enterprise IDP not yet determined; mock lets MVP focus on core | ✓ Good — adapter pattern ready for real IDP |
+| Qwen3Guard-Gen-0.6B over LLM Guard toxicity | LLM Guard toxicity useless for Chinese; Qwen3Guard is generative with bilingual support | ✓ Good — effective bilingual detection |
+| DB-first ProviderRegistry | Admin config changes take effect without restart | ✓ Good — immediate propagation |
+| SQLite WAL for MVP | Proven at 100-user scale, PostgreSQL migration path clear | ✓ Good — MVP works |
+| Presidio regex-only entities | NLP recognizers cause Chinese false positives; regex matches reliable | ✓ Good — zero Chinese false positives |
+| SentenceBuffer (full-response-first) | Simpler than per-chunk streaming, reliable safety guarantee | ✓ Good — works well for MVP |
+| Chinese block message templates | Never echo content, bilingual support required by enterprise users | ✓ Good — compliant, no echoing |
 
 ## Constraints
 
-- **Tech stack**: React + TypeScript frontend, Python + FastAPI backend, SQLite for MVP / PostgreSQL for production — proven stack for enterprise web apps
+- **Tech stack**: React + TypeScript frontend, Python + FastAPI backend, SQLite for MVP / PostgreSQL for production
 - **Architecture**: Frontend never calls model providers directly — all safety enforcement on backend
 - **Safety policy**: Block full content on any policy violation — no redaction or partial display
 - **Audit**: Log metadata only — never store raw prompts, raw model outputs, or full PII values
 - **Auth**: OIDC integration required — no anonymous access, mock OIDC for MVP
 - **Deployment**: Local development first (uvicorn + npm dev + local SQLite) — deployment strategy deferred
 
-## Key Decisions
-
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Mock OIDC first | Enterprise IDP not yet determined; mock lets MVP focus on core chat + safety pipeline | — Pending |
-| Presidio + Llama Guard for filtering | Enterprise needs reliable detection from day one; homegrown regex won't catch nuanced attacks | — Pending |
-| Store only allowed-through conversation content | Database should never contain non-compliant data; blocked content only exists as audit metadata | — Pending |
-| Local development deployment | Focus on working MVP first; deployment constraints shouldn't slow development | — Pending |
-| Streaming with safety buffer | Non-streaming chat feels slow; streaming with buffered safety checks gives responsive UX while maintaining safety | — Pending |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-
 ---
-*Last updated: 2026-05-21 after initialization*
+*Last updated: 2026-05-23 after v1.0 milestone*
