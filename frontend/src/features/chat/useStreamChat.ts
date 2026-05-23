@@ -6,11 +6,19 @@ export type StreamSegment =
   | { type: "text"; content: string }
   | { type: "redacted"; label: string; category: string };
 
+interface BlockedInfo {
+  message: string;
+  categories: string[];
+  conversationId?: string;
+  messageId?: string;
+}
+
 interface StreamResult {
   conversationId?: string;
   messageId?: string;
   segments: StreamSegment[];
   error?: string | null;
+  blocked?: BlockedInfo | null;
 }
 
 export function useStreamChat() {
@@ -52,16 +60,43 @@ export function useStreamChat() {
           }),
         });
 
-        if (!response.ok || !response.body) {
-          // Auto-degrade to non-streaming
-          setDegraded(true);
-          setIsStreaming(false);
-          const fallback = await sendChatMessage(message, modelId, conversationId);
-          return {
-            conversationId: fallback.conversation_id ?? undefined,
-            messageId: fallback.message_id ?? undefined,
-            segments: [],
-          };
+        if (!response.ok) {
+          // 401 = auth issue (not a streaming problem), 4xx = client error — don't degrade
+          if (response.status === 401) {
+            setStreamError("认证失败，请重新登录");
+            setIsStreaming(false);
+            return null;
+          }
+          if (response.status >= 400 && response.status < 500) {
+            setStreamError("请求错误");
+            setIsStreaming(false);
+            return null;
+          }
+          // 5xx or no body = server/connection issue — degrade to non-streaming
+          if (!response.body) {
+            setDegraded(true);
+            setIsStreaming(false);
+            const fallback = await sendChatMessage(message, modelId, conversationId);
+            if (fallback.status === "allowed") {
+              return {
+                conversationId: fallback.conversation_id ?? undefined,
+                messageId: fallback.message_id ?? undefined,
+                segments: [{ type: "text", content: fallback.content }],
+              };
+            }
+            if (fallback.status === "blocked") {
+              return {
+                segments: [],
+                blocked: {
+                  message: fallback.content,
+                  categories: fallback.risk_categories ?? [],
+                  conversationId: fallback.conversation_id ?? undefined,
+                },
+              };
+            }
+            setStreamError(fallback.content);
+            return null;
+          }
         }
 
         const stream = response.body
@@ -73,10 +108,10 @@ export function useStreamChat() {
         const segments: StreamSegment[] = [];
         let errorMessage: string | null = null;
 
-        // 30s timeout
+        // 600s timeout — guard model inference can be slow on CPU
         const timeout = setTimeout(() => {
           controller.abort();
-        }, 30000);
+        }, 600000);
 
         try {
           while (true) {
@@ -101,6 +136,17 @@ export function useStreamChat() {
                 segments,
               };
               break;
+            } else if (event.event === "blocked") {
+              // Output blocked by safety policy — entire response rejected
+              return {
+                segments: [],
+                blocked: {
+                  message: data.message,
+                  categories: data.categories,
+                  conversationId: data.conversation_id,
+                  messageId: data.message_id,
+                },
+              };
             } else if (event.event === "error") {
               errorMessage = data.message;
               setStreamError(data.message);
@@ -116,15 +162,34 @@ export function useStreamChat() {
         return { ...result, error: errorMessage };
       } catch (err) {
         if ((err as Error).name === "AbortError") {
-          // Timeout — auto-degrade
+          // Timeout — auto-degrade to non-streaming
           setDegraded(true);
           setIsStreaming(false);
-          const fallback = await sendChatMessage(message, modelId, conversationId);
-          return {
-            conversationId: fallback.conversation_id ?? undefined,
-            messageId: fallback.message_id ?? undefined,
-            segments: [],
-          };
+          try {
+            const fallback = await sendChatMessage(message, modelId, conversationId);
+            if (fallback.status === "allowed") {
+              return {
+                conversationId: fallback.conversation_id ?? undefined,
+                messageId: fallback.message_id ?? undefined,
+                segments: [{ type: "text", content: fallback.content }],
+              };
+            }
+            if (fallback.status === "blocked") {
+              return {
+                segments: [],
+                blocked: {
+                  message: fallback.content,
+                  categories: fallback.risk_categories ?? [],
+                  conversationId: fallback.conversation_id ?? undefined,
+                },
+              };
+            }
+            setStreamError(fallback.content);
+            return null;
+          } catch {
+            setStreamError("请求超时，请重试");
+            return null;
+          }
         }
         setStreamError(
           err instanceof Error ? err.message : "Stream failed"

@@ -46,6 +46,11 @@ export async function apiClient<T>(
     throw new Error(`API error ${response.status}: ${errorBody}`);
   }
 
+  // 204 No Content — no body to parse
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -62,6 +67,7 @@ export interface MessageResponse {
   id: string;
   role: string;
   content: string;
+  extra?: { risk_categories?: string[] } | null;
   created_at: string;
 }
 

@@ -55,7 +55,7 @@ class ConversationRepository:
         return result.scalar_one_or_none()
 
     async def add_message(
-        self, conversation_id: uuid.UUID, role: str, content: str
+        self, conversation_id: uuid.UUID, role: str, content: str, extra: dict | None = None
     ) -> Message:
         """Add a message to a conversation."""
         message = Message(
@@ -63,6 +63,7 @@ class ConversationRepository:
             conversation_id=conversation_id,
             role=role,
             content=content,
+            extra=extra,
             created_at=datetime.utcnow(),
         )
         self._session.add(message)

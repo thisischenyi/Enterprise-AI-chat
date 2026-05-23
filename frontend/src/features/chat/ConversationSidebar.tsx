@@ -85,7 +85,10 @@ export default function ConversationSidebar() {
                 return (
                   <button
                     key={conv.id}
-                    onClick={() => setActiveConversation(conv.id)}
+                    onClick={() => {
+                      setActiveConversation(conv.id);
+                      useChatStore.getState().setSelectedModel(conv.model_id);
+                    }}
                     className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
                       isActive ? "border-l-[3px] border-l-blue-600 bg-gray-100" : ""
                     }`}

@@ -6,11 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.schema import PolicyConfig
 
 DEFAULT_SCANNERS = [
-    "pii_detection",
-    "prompt_injection",
-    "jailbreak",
-    "toxicity",
-    "ban_topics",
+    "data_protection",
+    "content_guard",
 ]
 
 

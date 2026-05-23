@@ -38,6 +38,12 @@ def encrypt_key(raw_key: str) -> str:
     return fernet.encrypt(raw_key.encode()).decode()
 
 
+def decrypt_key(encrypted_key: str) -> str:
+    """Decrypt an API key from the database for actual use."""
+    fernet = _get_fernet()
+    return fernet.decrypt(encrypted_key.encode()).decode()
+
+
 class ModelConfigRepository:
     @staticmethod
     async def list_models(session: AsyncSession) -> list[ModelConfig]:

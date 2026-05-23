@@ -20,10 +20,9 @@ export default function AuthCallbackPage() {
 
     handleCallback(stateToken, role)
       .then(() => {
-        navigate("/", { replace: true });
+        navigate(role === "admin" ? "/admin" : "/chat", { replace: true });
       })
       .catch(() => {
-        // Error is stored in auth state, redirect to login after brief delay
         setTimeout(() => {
           navigate("/login", { replace: true });
         }, 2000);

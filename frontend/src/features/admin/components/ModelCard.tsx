@@ -11,11 +11,12 @@ interface ModelConfig {
 interface ModelCardProps {
   model: ModelConfig;
   onEdit: (model: ModelConfig) => void;
+  onDelete: (model: ModelConfig) => void;
 }
 
 export type { ModelConfig };
 
-export default function ModelCard({ model, onEdit }: ModelCardProps) {
+export default function ModelCard({ model, onEdit, onDelete }: ModelCardProps) {
   return (
     <div
       className={`bg-white border border-gray-200 rounded-lg p-4 ${
@@ -37,12 +38,20 @@ export default function ModelCard({ model, onEdit }: ModelCardProps) {
       <p className="text-sm text-gray-500 mb-1">{model.provider_type}</p>
       <p className="text-sm text-gray-500 mb-1 truncate">{model.endpoint_url}</p>
       <p className="text-sm text-gray-400 mb-3">{model.api_key_masked}</p>
-      <button
-        onClick={() => onEdit(model)}
-        className="text-sm text-blue-600 hover:text-blue-800"
-      >
-        编辑模型
-      </button>
+      <div className="flex gap-3">
+        <button
+          onClick={() => onEdit(model)}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          编辑模型
+        </button>
+        <button
+          onClick={() => onDelete(model)}
+          className="text-sm text-red-600 hover:text-red-800"
+        >
+          删除
+        </button>
+      </div>
     </div>
   );
 }

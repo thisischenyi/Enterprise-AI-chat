@@ -30,13 +30,14 @@ class MessageResponse(BaseModel):
     id: str
     role: str
     content: str
+    extra: dict | None = None
     created_at: str
 
 
 # --- Endpoints ---
 
 
-@router.get("/")
+@router.get("")
 async def list_conversations(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
@@ -77,6 +78,7 @@ async def get_messages(
             id=str(m.id),
             role=m.role,
             content=m.content,
+            extra=m.extra,
             created_at=m.created_at.isoformat(),
         )
         for m in messages

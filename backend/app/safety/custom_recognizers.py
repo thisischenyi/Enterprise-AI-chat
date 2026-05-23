@@ -1,9 +1,10 @@
 """Custom Presidio recognizers for enterprise PII detection.
 
-Three recognizers for enterprise-specific PII:
+Four recognizers for enterprise-specific PII:
 - EmployeeIdRecognizer: EMP-XXXX pattern with NLP context
 - ProjectCodeRecognizer: PRJ-XXXX pattern with NLP context
 - ChineseNationalIdRecognizer: 18-digit ID with checksum validation
+- IncomeRecognizer: salary/income amounts near salary keywords
 """
 
 from __future__ import annotations
@@ -121,7 +122,7 @@ class ChineseNationalIdRecognizer(PatternRecognizer):
         "ID card",
     ]
 
-    SUPPORTED_LANGUAGE = "zh"
+    SUPPORTED_LANGUAGE = "en"  # Must match the language we pass to analyzer (currently always "en")
 
     def __init__(self, name: str = "ChineseNationalIdRecognizer", **kwargs):
         super().__init__(
@@ -149,3 +150,65 @@ class ChineseNationalIdRecognizer(PatternRecognizer):
                 validated_results.append(result)
 
         return validated_results
+
+
+# Salary/income keywords in Chinese and English
+_SALARY_KEYWORDS = [
+    "工资", "薪资", "薪酬", "薪水", "月薪", "年薪", "收入",
+    "salary", "income", "pay", "wage", "compensation", "earnings",
+]
+
+
+class IncomeRecognizer(PatternRecognizer):
+    """Detects salary/income amounts near salary keywords.
+
+    Matches numbers (3+ digits) when salary-related keywords appear
+    within 60 characters of the number. This catches inputs like
+    "我的工资是23133" where "23133" alone wouldn't be recognized as PII.
+    """
+
+    PATTERNS = [
+        Pattern(
+            name="income_amount",
+            regex=r"\b\d{3,12}\b",
+            score=0.4,
+        ),
+    ]
+
+    CONTEXT = _SALARY_KEYWORDS
+
+    SUPPORTED_LANGUAGE = "en"
+
+    def __init__(self, name: str = "IncomeRecognizer", **kwargs):
+        super().__init__(
+            supported_entity="INCOME",
+            name=name,
+            patterns=self.PATTERNS,
+            context=self.CONTEXT,
+            supported_language=self.SUPPORTED_LANGUAGE,
+            **kwargs,
+        )
+
+    def analyze(self, text: str, entities: list[str] | None = None, nlp_artifacts=None) -> list[RecognizerResult]:
+        """Override to boost confidence when salary keywords are nearby."""
+        results = super().analyze(text, entities, nlp_artifacts)
+
+        text_lower = text.lower()
+        has_salary_context = any(kw in text_lower for kw in _SALARY_KEYWORDS)
+
+        if not has_salary_context:
+            # No salary keywords in the whole text — these are just random numbers
+            return []
+
+        # Salary context exists — boost confidence for nearby numbers
+        validated = []
+        for result in results:
+            # Check if a salary keyword is within 60 chars of this number
+            start = max(0, result.start - 60)
+            end = min(len(text), result.end + 60)
+            surrounding = text[start:end].lower()
+            if any(kw in surrounding for kw in _SALARY_KEYWORDS):
+                result.score = 0.85  # High confidence — number + salary keyword
+                validated.append(result)
+
+        return validated

@@ -1,6 +1,7 @@
 """Enterprise AI Chat MVP — FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
+import logging
 import os
 from pathlib import Path
 
@@ -12,7 +13,14 @@ from app.db import init_db
 
 # Load APIKEY.env from project root (two levels up from this file's package)
 _project_root = Path(__file__).parent.parent.parent
-load_dotenv(_project_root / "APIKEY.env")
+load_dotenv(_project_root / "APIKEY.env", override=True)
+
+# Configure logging — INFO level so safety scan details appear in console
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 @asynccontextmanager

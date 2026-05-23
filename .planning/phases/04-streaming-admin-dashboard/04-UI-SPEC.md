@@ -47,12 +47,12 @@ Exceptions: none
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body / Label | 14px | 400 (body), 500 (label) | 1.5 |
+| Body / Label | 14px | 400 | 1.5 |
 | Heading | 16px | 600 | 1.3 |
 | Display | 20px | 600 | 1.2 |
 | Stat value | 28px | 600 | 1.1 |
 
-Labels use 14px at weight 500 to differentiate from body text at weight 400. This keeps the type scale to 4 sizes.
+Labels use 14px at weight 400 (same as body). Differentiate labels from body text via color (text-gray-500 for labels vs text-gray-900 for body) and context, not weight.
 
 ---
 
@@ -105,7 +105,7 @@ Accent reserved for: Save button fill, active admin sidebar left border, paginat
 |---------|------|
 | Streaming message bubble | Same as assistant message (left-aligned, bg-white border, rounded-lg) |
 | Typing indicator | Blinking cursor character at end of streaming text |
-| Redaction tag | Inline span, bg-red-50 text-red-700 border border-red-200 rounded px-2 py-0.5 text-14px font-500 |
+| Redaction tag | Inline span, bg-red-50 text-red-700 border border-red-200 rounded px-2 py-0.5 text-14px font-semibold |
 | Redaction labels | `[PII已过滤]`, `[机密信息已过滤]`, `[策略违规已过滤]` |
 | Stream complete | Cursor removed, message finalized |
 | Stream error | Gray italic text: "连接中断，已切换为非流式模式" |

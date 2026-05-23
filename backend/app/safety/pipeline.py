@@ -37,13 +37,25 @@ class SafetyPipeline:
         self, content: str, user_id: uuid.UUID, model_id: str
     ) -> PolicyDecision:
         """Scan user input through all scanners with fail-closed timeout."""
-        return await self._scan(content, "input")
+        logger.info("Input scan: %r", content[:100])
+        decision = await self._scan(content, "input")
+        logger.info(
+            "Input scan result: action=%s, categories=%s, summary=%s",
+            decision.action, decision.risk_categories, decision.scanner_findings_summary,
+        )
+        return decision
 
     async def scan_output(
         self, content: str, user_id: uuid.UUID, model_id: str
     ) -> PolicyDecision:
         """Scan model output through all scanners with fail-closed timeout."""
-        return await self._scan(content, "output")
+        logger.info("Output scan: %r", content[:100])
+        decision = await self._scan(content, "output")
+        logger.info(
+            "Output scan result: action=%s, categories=%s, summary=%s",
+            decision.action, decision.risk_categories, decision.scanner_findings_summary,
+        )
+        return decision
 
     async def _scan(self, content: str, source: str) -> PolicyDecision:
         """Run all scanners with timeout, return policy decision."""

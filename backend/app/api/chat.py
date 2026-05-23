@@ -69,11 +69,11 @@ def get_safety_pipeline() -> SafetyPipeline:
         logger.warning("DataProtectionScanner unavailable: %s", e)
 
     try:
-        import app.safety.torch_compat  # noqa: F401 — must patch before llm_guard
+        import app.safety.torch_compat  # noqa: F401 — must patch before transformers
         from app.safety.llm_guardrails import LLMGuardrailScanner
         scanners.append(LLMGuardrailScanner())
     except Exception as e:
-        logger.warning("LLMGuardrailScanner unavailable: %s", e)
+        logger.warning("ContentGuardScanner unavailable: %s", e)
 
     logger.info("SafetyPipeline initialized with %d scanner(s)", len(scanners))
     policy = SafetyPolicy()
@@ -110,11 +110,14 @@ async def chat_send(
         conversation = await conv_repo.get_conversation(conv_uuid, user_id)
         if conversation is None:
             raise HTTPException(status_code=403, detail="Access denied")
-        # Load last 20 messages as context
+        # Load last 20 messages as context — exclude blocked roles
         all_messages = await conv_repo.get_messages(conv_uuid)
-        history_messages = [
-            {"role": m.role, "content": m.content} for m in all_messages[-20:]
-        ]
+        history_messages = []
+        for m in all_messages[-20:]:
+            if m.role == "blocked":
+                continue
+            role = m.role if m.role in ("system", "user", "assistant", "tool") else "user"
+            history_messages.append({"role": role, "content": m.content})
 
     # Build messages list for model call
     messages = history_messages + [{"role": "user", "content": request.message}]

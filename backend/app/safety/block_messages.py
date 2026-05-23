@@ -12,56 +12,56 @@ from app.safety.scanner_interface import RiskCategory
 BLOCK_MESSAGE_TEMPLATES: dict[tuple[RiskCategory, str], tuple[str, str]] = {
     # PII / Sensitive Data
     (RiskCategory.pii, "input"): (
-        "Your message was blocked because it contains personal or sensitive information.",
-        "Please remove any personal details and try again.",
+        "您的消息因包含个人或敏感信息而被拦截。",
+        "请移除个人敏感信息后重试。",
     ),
     (RiskCategory.pii, "output"): (
-        "The response was blocked because it contains personal or sensitive information.",
-        "Please try a different query.",
+        "回复因包含个人或敏感信息而被拦截。",
+        "请尝试其他问题。",
     ),
     (RiskCategory.sensitive_data, "input"): (
-        "Your message was blocked because it contains sensitive enterprise data.",
-        "Please remove any sensitive identifiers and try again.",
+        "您的消息因包含企业敏感数据而被拦截。",
+        "请移除敏感标识后重试。",
     ),
     (RiskCategory.sensitive_data, "output"): (
-        "The response was blocked because it contains sensitive enterprise data.",
-        "Please try a different query.",
+        "回复因包含企业敏感数据而被拦截。",
+        "请尝试其他问题。",
     ),
     # Prompt Injection
     (RiskCategory.prompt_injection, "input"): (
-        "Your message was blocked because it appears to contain instructions intended to override system behavior.",
-        "Please rephrase your message naturally.",
+        "您的消息因疑似包含指令注入而被拦截。",
+        "请用自然语言重新表述。",
     ),
     (RiskCategory.prompt_injection, "output"): (
-        "The response was blocked because it appears to contain manipulative instructions.",
-        "Please try a different query.",
+        "回复因疑似包含操控指令而被拦截。",
+        "请尝试其他问题。",
     ),
     # Jailbreak
     (RiskCategory.jailbreak, "input"): (
-        "Your message was blocked because it appears to be an attempt to bypass safety constraints.",
-        "Please rephrase your message.",
+        "您的消息因疑似绕过安全约束而被拦截。",
+        "请重新表述您的消息。",
     ),
     (RiskCategory.jailbreak, "output"): (
-        "The response was blocked because it appears to contain jailbreak content.",
-        "Please try a different query.",
+        "回复因包含越狱内容而被拦截。",
+        "请尝试其他问题。",
     ),
     # Harmful Content
     (RiskCategory.harmful_content, "input"): (
-        "Your message was blocked because it contains harmful or offensive content.",
-        "Please rephrase without harmful language.",
+        "您的消息因包含有害或不当内容而被拦截。",
+        "请移除不当内容后重试。",
     ),
     (RiskCategory.harmful_content, "output"): (
-        "The response was blocked because it contains harmful or offensive content.",
-        "Please try a different query.",
+        "回复因包含有害或不当内容而被拦截。",
+        "请尝试其他问题。",
     ),
     # Compliance
     (RiskCategory.compliance, "input"): (
-        "Your message was blocked because it may violate enterprise compliance policies.",
-        "Please consult your organization's guidelines.",
+        "您的消息因可能违反合规政策而被拦截。",
+        "请参考组织合规指南。",
     ),
     (RiskCategory.compliance, "output"): (
-        "The response was blocked because it may violate compliance policies.",
-        "Please try a different query.",
+        "回复因可能违反合规政策而被拦截。",
+        "请尝试其他问题。",
     ),
 }
 
@@ -75,7 +75,7 @@ _SEVERITY_ORDER: list[RiskCategory] = [
     RiskCategory.compliance,
 ]
 
-FAIL_CLOSED_MESSAGE = "Your message could not be processed due to a system error. Please try again later."
+FAIL_CLOSED_MESSAGE = "系统处理异常，请稍后重试。"
 
 
 def get_block_message(categories: list[RiskCategory], source: str) -> str:

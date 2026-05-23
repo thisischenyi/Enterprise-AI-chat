@@ -2,23 +2,26 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchConversationMessages } from "../../lib/api";
 import { useChatStore } from "../../stores/chatStore";
+import { useAuthStore } from "../../stores/authStore";
 import { useStreamChat } from "./useStreamChat";
 import ConversationSidebar from "./ConversationSidebar";
 import ModelSelector from "./ModelSelector";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import StreamingMessage from "./StreamingMessage";
+import { Settings, LogOut } from "lucide-react";
 
 export default function ChatPage() {
   const queryClient = useQueryClient();
   const selectedModel = useChatStore((s) => s.selectedModel);
-  const setSelectedModel = useChatStore((s) => s.setSelectedModel);
   const addMessage = useChatStore((s) => s.addMessage);
   const setLoading = useChatStore((s) => s.setLoading);
   const activeConversationId = useChatStore((s) => s.activeConversationId);
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
-  const { streamMessage, isStreaming, streamContent, streamError, degraded, reset } =
+  const { streamMessage, isStreaming, streamContent, degraded, reset } =
     useStreamChat();
 
   // Fetch messages when a conversation is selected
@@ -45,24 +48,11 @@ export default function ChatPage() {
           id: msg.id,
           role: msg.role as "user" | "model" | "blocked" | "error",
           content: msg.content,
+          riskCategories: msg.extra?.risk_categories,
         });
       }
     }
   }, [conversationMessages, activeConversationId]);
-
-  // Auto-select model when resuming a conversation
-  const { data: conversations } = useQuery({
-    queryKey: ["conversations"],
-  });
-
-  useEffect(() => {
-    if (activeConversationId && Array.isArray(conversations)) {
-      const conv = conversations.find((c: { id: string; model_id: string }) => c.id === activeConversationId);
-      if (conv) {
-        setSelectedModel(conv.model_id);
-      }
-    }
-  }, [activeConversationId, conversations, setSelectedModel]);
 
   const handleSend = async (message: string) => {
     if (!selectedModel) return;
@@ -97,6 +87,17 @@ export default function ChatPage() {
         role: "error",
         content: result.error,
       });
+    } else if (result.blocked) {
+      // Output blocked by safety policy — show block message persistently
+      if (result.blocked.conversationId && !activeConversationId) {
+        setActiveConversation(result.blocked.conversationId);
+      }
+      addMessage({
+        id: result.blocked.messageId || crypto.randomUUID(),
+        role: "blocked",
+        content: result.blocked.message,
+        riskCategories: result.blocked.categories,
+      });
     } else if (result) {
       // Use result.segments (not streamContent state) to avoid stale closure
       const finalContent = result.segments
@@ -122,8 +123,26 @@ export default function ChatPage() {
       {/* Chat area */}
       <div className="flex flex-1 flex-col">
         {/* Model selector header */}
-        <div className="border-b border-gray-200 bg-white px-4 py-3">
+        <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
           <ModelSelector />
+          <div className="flex items-center gap-3">
+            {user?.role === "admin" && (
+              <a
+                href="/admin"
+                className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                <Settings className="w-4 h-4" />
+                管理后台
+              </a>
+            )}
+            <button
+              onClick={logout}
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            >
+              <LogOut className="w-4 h-4" />
+              退出
+            </button>
+          </div>
         </div>
 
         {/* Messages area */}

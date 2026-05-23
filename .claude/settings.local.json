@@ -34,7 +34,18 @@
       "Bash(.venv/Scripts/python.exe -c ' *)",
       "Bash(.venv/Scripts/python.exe -c \"import llm_guard.input_scanners.prompt_injection as pi; print\\([x for x in dir\\(pi\\) if not x.startswith\\('_'\\)]\\)\")",
       "Bash(.venv/Scripts/python.exe -c \"import llm_guard.input_scanners.jailbreak as jb; print\\([x for x in dir\\(jb\\) if not x.startswith\\('_'\\) and x[0].isupper\\(\\)]\\)\")",
-      "Skill(gsd-pause-work)"
+      "Skill(gsd-pause-work)",
+      "PowerShell($env:HF_ENDPOINT = \"https://hf-mirror.com\"; Set-Location \"C:\\\\Users\\\\ChenYi\\\\Documents\\\\Coding\\\\ai_chat_tool\\\\backend\"; & .venv\\\\Scripts\\\\python.exe -c \"from huggingface_hub import hf_hub_download; info = hf_hub_download\\('ProtectAI/deberta-v3-base-prompt-injection', 'config.json', local_files_only=False\\); print\\('Mirror OK:', info\\)\")",
+      "Bash(dir \"%USERPROFILE%\\\\.cache\\\\huggingface\\\\hub\\\\models--ProtectAI--deberta-v3-base-prompt-injection\\\\snapshots\")",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(New-Item *)",
+      "Skill(gsd-plan-phase)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(.venv/Scripts/python -c \"from app.api.chat_stream import router; print\\('OK'\\)\")",
+      "Bash(.venv/Scripts/python -c \"from app.main import app; print\\('main imports OK'\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(.venv/Scripts/python -c \"from app.main import app; print\\('OK'\\)\")"
     ]
   }
 }
