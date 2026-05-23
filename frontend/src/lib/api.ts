@@ -98,6 +98,10 @@ export async function fetchConversations(): Promise<ConversationSummary[]> {
   return apiClient<ConversationSummary[]>("/conversations");
 }
 
+export async function deleteConversation(id: string): Promise<void> {
+  return apiClient<void>(`/conversations/${id}`, { method: "DELETE" });
+}
+
 export async function fetchConversationMessages(id: string): Promise<MessageResponse[]> {
   return apiClient<MessageResponse[]>(`/conversations/${id}/messages`);
 }

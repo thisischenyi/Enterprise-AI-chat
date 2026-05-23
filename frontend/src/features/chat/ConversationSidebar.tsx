@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { Plus, MessageSquare, Menu } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, MessageSquare, Menu, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { fetchConversations } from "../../lib/api";
+import { fetchConversations, deleteConversation } from "../../lib/api";
 import type { ConversationSummary } from "../../lib/api";
 import { useChatStore } from "../../stores/chatStore";
 
@@ -31,7 +31,9 @@ function groupConversations(conversations: ConversationSummary[]) {
 }
 
 export default function ConversationSidebar() {
+  const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const activeConversationId = useChatStore((s) => s.activeConversationId);
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
   const startNewConversation = useChatStore((s) => s.startNewConversation);
@@ -39,6 +41,18 @@ export default function ConversationSidebar() {
   const { data: conversations, isLoading } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteConversation,
+    onSuccess: () => {
+      if (confirmDeleteId === activeConversationId) {
+        setActiveConversation(null);
+        useChatStore.getState().clearMessages();
+      }
+      setConfirmDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
   });
 
   const grouped = conversations ? groupConversations(conversations) : {};
@@ -83,23 +97,66 @@ export default function ConversationSidebar() {
               {items.map((conv) => {
                 const isActive = conv.id === activeConversationId;
                 return (
-                  <button
+                  <div
                     key={conv.id}
-                    onClick={() => {
-                      setActiveConversation(conv.id);
-                      useChatStore.getState().setSelectedModel(conv.model_id);
-                    }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                      isActive ? "border-l-[3px] border-l-blue-600 bg-gray-100" : ""
-                    }`}
+                    className="group relative flex items-center"
                   >
-                    <span className="block truncate">{conv.title}</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        setActiveConversation(conv.id);
+                        useChatStore.getState().setSelectedModel(conv.model_id);
+                      }}
+                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                        isActive ? "border-l-[3px] border-l-blue-600 bg-gray-100" : ""
+                      }`}
+                    >
+                      <span className="block truncate">{conv.title}</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDeleteId(conv.id);
+                      }}
+                      className="absolute right-2 hidden p-1 text-gray-400 hover:text-red-600 group-hover:flex"
+                      title="Delete conversation"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 );
               })}
             </div>
           ))}
       </div>
+
+      {/* Delete confirmation dialog */}
+      {confirmDeleteId && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
+          <div className="mx-4 rounded-lg bg-white p-4 shadow-lg">
+            <p className="text-sm font-medium text-gray-900">
+              确定要删除这个对话吗？
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              删除后无法恢复，所有消息将被清除。
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
+              >
+                取消
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(confirmDeleteId)}
+                disabled={deleteMutation.isPending}
+                className="rounded bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "删除中..." : "删除"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

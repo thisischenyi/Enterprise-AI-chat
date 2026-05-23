@@ -80,6 +80,23 @@ class ConversationRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def delete_conversation(
+        self, conversation_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool:
+        """Delete a conversation and its messages. Returns True if deleted."""
+        conversation = await self.get_conversation(conversation_id, user_id)
+        if conversation is None:
+            return False
+
+        # Delete messages first (no cascade on FK)
+        msgs = await self.get_messages(conversation_id)
+        for msg in msgs:
+            await self._session.delete(msg)
+
+        await self._session.delete(conversation)
+        await self._session.flush()
+        return True
+
     async def update_timestamp(self, conversation_id: uuid.UUID) -> None:
         """Update conversation's updated_at to now."""
         stmt = (

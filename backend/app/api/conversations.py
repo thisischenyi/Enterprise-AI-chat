@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,24 @@ async def list_conversations(
         )
         for c in conversations
     ]
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> Response:
+    """Delete a conversation and its messages. Returns 403 if user doesn't own it."""
+    repo = ConversationRepository(db)
+    user_id = uuid.UUID(str(current_user.id))
+    conv_uuid = uuid.UUID(conversation_id)
+
+    deleted = await repo.delete_conversation(conv_uuid, user_id)
+    if not deleted:
+        raise HTTPException(status_code=403, detail="Access denied")
+    await db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/{conversation_id}/messages")
