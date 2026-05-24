@@ -53,10 +53,11 @@ async def get_db_session() -> AsyncSession:
 async def init_db() -> None:
     """Create all tables and seed mock users + model configs on startup."""
     from app.db.schema import Base
-    from app.db.seed_data import seed_users, seed_model_configs
+    from app.db.seed_data import seed_users, seed_model_configs, seed_policy_configs
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     await seed_users(DATABASE_URL)
     await seed_model_configs(DATABASE_URL)
+    await seed_policy_configs(DATABASE_URL)

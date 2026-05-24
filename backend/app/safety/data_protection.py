@@ -56,7 +56,7 @@ class DataProtectionScanner:
     in asyncio.to_thread() for async compatibility.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, score_threshold: float = 0.7) -> None:
         from presidio_analyzer import AnalyzerEngine
         from presidio_analyzer.nlp_engine import NlpEngineProvider
 
@@ -67,6 +67,7 @@ class DataProtectionScanner:
             ProjectCodeRecognizer,
         )
 
+        self._score_threshold = score_threshold
         spacy_model = os.environ.get("SPACY_MODEL", "en_core_web_lg")
 
         # Configure NLP engine with spaCy
@@ -102,8 +103,8 @@ class DataProtectionScanner:
         self._scan_entities = list(_ENTITY_CATEGORY_MAP.keys())
 
         logger.info(
-            "DataProtectionScanner initialized: model=%s, entities=%s",
-            spacy_model, self._scan_entities,
+            "DataProtectionScanner initialized: model=%s, entities=%s, score_threshold=%.2f",
+            spacy_model, self._scan_entities, self._score_threshold,
         )
 
     async def scan(self, content: str, source: str) -> ScannerResult:
@@ -119,7 +120,7 @@ class DataProtectionScanner:
                 text=content,
                 language="en",
                 entities=self._scan_entities,
-                score_threshold=0.7,
+                score_threshold=self._score_threshold,
             )
 
             findings: list[ScannerFinding] = []

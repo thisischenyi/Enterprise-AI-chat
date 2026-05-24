@@ -165,12 +165,18 @@ SAFETY_FIXTURES: list[SafetyFixture] = [
 
 
 class MockDataProtectionScanner:
-    """Mock that detects PII/sensitive_data based on simple pattern matching."""
+    """Mock that detects PII/sensitive_data based on simple pattern matching.
+
+    Supports score_threshold like the real DataProtectionScanner:
+    findings with confidence < score_threshold are filtered out.
+    """
+
+    def __init__(self, score_threshold: float = 0.0) -> None:
+        self._score_threshold = score_threshold
 
     async def scan(self, content: str, source: str) -> ScannerResult:
         findings: list[ScannerFinding] = []
 
-        # PII patterns
         import re
 
         if re.search(r"\d{3}-\d{2}-\d{4}", content):
@@ -190,35 +196,52 @@ class MockDataProtectionScanner:
         if re.search(r"PRJ-\d+", content):
             findings.append(ScannerFinding(RiskCategory.sensitive_data, 0.95, "Detected PROJECT_CODE pattern"))
 
+        # Apply score_threshold filter (mirrors real DataProtectionScanner)
+        filtered = [f for f in findings if f.confidence >= self._score_threshold]
+
         return ScannerResult(
-            findings=findings,
-            has_violations=len(findings) > 0,
+            findings=filtered,
+            has_violations=len(filtered) > 0,
             scanner_name="data_protection",
         )
 
 
 class MockLLMGuardrailScanner:
-    """Mock that detects prompt injection/jailbreak/harmful based on keywords."""
+    """Mock that detects prompt injection/jailbreak/harmful based on keywords.
+
+    Supports min_confidence like the real ContentGuardScanner:
+    findings with confidence < min_confidence are filtered out.
+    """
+
+    def __init__(self, min_confidence: float = 0.0) -> None:
+        self._min_confidence = min_confidence
 
     async def scan(self, content: str, source: str) -> ScannerResult:
         findings: list[ScannerFinding] = []
         lower = content.lower()
 
-        # Prompt injection
+        # Prompt injection (confidence=0.95)
         if any(p in lower for p in ["ignore previous instructions", "ignore all previous", "you are now dan"]):
             findings.append(ScannerFinding(RiskCategory.prompt_injection, 0.95, "Detected prompt_injection violation"))
 
-        # Jailbreak
+        # Jailbreak (confidence=0.95)
         if any(p in lower for p in ["override all safety", "bypass safety", "override safety checks"]):
             findings.append(ScannerFinding(RiskCategory.jailbreak, 0.95, "Detected jailbreak pattern"))
 
-        # Harmful content
+        # Harmful content (confidence=0.9)
         if any(p in lower for p in ["make explosives", "hack into", "ammonium nitrate"]):
             findings.append(ScannerFinding(RiskCategory.harmful_content, 0.9, "Detected harmful content"))
 
+        # Borderline injection (confidence=0.85) — filtered by min_confidence >= 0.90
+        if "new instructions" in lower:
+            findings.append(ScannerFinding(RiskCategory.prompt_injection, 0.85, "Detected borderline injection"))
+
+        # Apply min_confidence filter (mirrors real ContentGuardScanner)
+        filtered = [f for f in findings if f.confidence >= self._min_confidence]
+
         return ScannerResult(
-            findings=findings,
-            has_violations=len(findings) > 0,
+            findings=filtered,
+            has_violations=len(filtered) > 0,
             scanner_name="llm_guardrails",
         )
 
@@ -230,12 +253,12 @@ class MockLLMGuardrailScanner:
 
 @pytest.fixture
 def data_scanner() -> MockDataProtectionScanner:
-    return MockDataProtectionScanner()
+    return MockDataProtectionScanner(score_threshold=0.0)
 
 
 @pytest.fixture
 def llm_scanner() -> MockLLMGuardrailScanner:
-    return MockLLMGuardrailScanner()
+    return MockLLMGuardrailScanner(min_confidence=0.0)
 
 
 PII_FIXTURES = [f for f in SAFETY_FIXTURES if RiskCategory.pii in f.expected_categories and "national ID" not in f.description and "Mixed" not in f.description and f.source == "input"]

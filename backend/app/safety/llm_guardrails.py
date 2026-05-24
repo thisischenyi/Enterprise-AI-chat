@@ -80,6 +80,64 @@ _HARMFUL_CONTENT_RULES: list[tuple[str, float]] = [
 _INJECTION_REGEXES = [(re.compile(p, re.IGNORECASE), score) for p, score in _INJECTION_RULES]
 _HARMFUL_REGEXES = [(re.compile(p, re.IGNORECASE), score) for p, score in _HARMFUL_CONTENT_RULES]
 
+_BUSINESS_CONTEXT_NOUNS = {
+    "project", "team", "meeting", "release", "sprint", "deployment",
+    "office", "department", "company", "client", "customer", "user",
+    "product", "feature", "system", "application", "service", "api",
+    "document", "report", "review", "presentation", "proposal", "plan",
+    "process", "workflow", "pipeline", "onboarding", "training", "course",
+    "employee", "staff", "manager", "board", "committee", "audit",
+    "compliance", "policy", "procedure", "standard", "guideline",
+    "contract", "agreement", "vendor", "partner", "supplier", "budget",
+    "schedule", "timeline", "milestone", "environment", "server",
+    "database", "network", "infrastructure", "platform", "website",
+    "portal", "dashboard", "integration", "migration", "upgrade",
+    "update", "patch", "fix", "bug", "issue", "ticket",
+    "task", "assignment", "deliverable", "requirement", "specification",
+    "design", "architecture", "implementation", "testing", "staging",
+    "production", "development", "operations", "security", "privacy",
+    "data", "analytics", "monitoring", "logging", "alerting",
+    "notification", "email", "message", "communication", "collaboration",
+    "feedback", "survey", "interview", "candidate", "position",
+    "role", "job", "career", "resume", "form", "template",
+    "example", "sample", "demo", "prototype", "mvp", "poc",
+    "pilot", "trial", "experiment", "research", "study", "analysis",
+    "evaluation", "assessment", "benchmark", "comparison", "selection",
+    "decision", "approval", "handoff", "transition", "rollout",
+    "launch", "fallback", "rollback", "backup", "recovery",
+    "incident", "problem", "change", "version", "iteration",
+    "cycle", "phase", "stage", "step", "action", "activity",
+    "session", "workshop", "seminar", "conference", "webinar",
+    "tutorial", "guide", "manual", "documentation", "wiki", "faq",
+    "support", "consulting", "strategy", "transformation",
+    "innovation", "optimization", "improvement", "enhancement",
+    "modernization", "automation", "setup", "configuration",
+    "项目", "团队", "会议", "发布", "部署", "部门", "公司",
+    "客户", "用户", "产品", "功能", "系统", "应用", "服务",
+    "文档", "报告", "评审", "计划", "流程", "培训", "员工",
+    "合规", "策略", "标准", "合同", "环境", "服务器", "数据库",
+    "网络", "平台", "集成", "迁移", "升级", "更新", "修复",
+    "任务", "需求", "设计", "架构", "测试", "生产", "开发",
+    "运维", "安全", "数据", "分析", "监控", "通知", "邮件",
+    "反馈", "面试", "职位", "模板", "示例", "演示", "原型",
+    "研究", "评估", "决策", "启动", "备份", "恢复", "版本",
+    "阶段", "步骤", "指南", "手册", "文档", "支持", "咨询",
+    "设置", "配置", "办公室",
+}
+
+
+def _is_business_context(content: str, match_start: int, match_end: int) -> bool:
+    """Check if a regex match appears in a legitimate business context.
+
+    Looks for common business nouns within 40 characters after the match.
+    Patterns like "new instructions for project setup" contain a business
+    noun ("project") near the match, indicating legitimate usage.
+    """
+    after_window = content[match_end:match_end + 40].lower()
+    before_window = content[max(0, match_start - 40):match_start].lower()
+    window = before_window + " " + after_window
+    return any(noun in window for noun in _BUSINESS_CONTEXT_NOUNS)
+
 # Qwen3Guard output category → our RiskCategory mapping
 _GUARD_CATEGORY_MAP: dict[str, RiskCategory] = {
     # English category names from model output
@@ -119,10 +177,11 @@ class ContentGuardScanner:
     responses that work well on both Chinese and English text.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, min_confidence: float = 0.80) -> None:
         import app.safety.torch_compat  # noqa: F401
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        self._min_confidence = min_confidence
         model_name = os.environ.get(
             "GUARD_MODEL", "Qwen/Qwen3Guard-Gen-0.6B"
         )
@@ -133,8 +192,8 @@ class ContentGuardScanner:
         self._model.eval()
 
         logger.info(
-            "ContentGuardScanner initialized: injection rules + harmful rules + %s",
-            model_name,
+            "ContentGuardScanner initialized: injection rules + harmful rules + %s, min_confidence=%.2f",
+            model_name, self._min_confidence,
         )
 
     async def scan(self, content: str, source: str) -> ScannerResult:
@@ -246,27 +305,52 @@ class ContentGuardScanner:
         return "violence"  # default if unsafe but category unclear
 
     def _check_injection_rules(self, content: str) -> list[ScannerFinding]:
-        """Check content against known injection regex patterns."""
+        """Check content against known injection regex patterns.
+
+        Only reports findings from rules with confidence >= self._min_confidence.
+        Higher min_confidence = fewer rules trigger (stricter filtering on what counts as injection).
+        Lower min_confidence = more rules trigger (catches borderline patterns).
+
+        Borderline rules (confidence < 0.90) are filtered through a business context
+        check to reduce false positives on legitimate phrases like
+        "Please follow the new instructions for project setup".
+        """
         findings: list[ScannerFinding] = []
         for regex, confidence in _INJECTION_REGEXES:
-            if regex.search(content):
+            if confidence < self._min_confidence:
+                continue
+            match = regex.search(content)
+            if not match:
+                continue
+            # Borderline rules: skip if match appears in legitimate business context
+            if confidence < 0.90 and _is_business_context(content, match.start(), match.end()):
+                logger.info(
+                    "Injection rule skipped (business context): pattern=%s, content=%r",
+                    regex.pattern, content[:100],
+                )
+                continue
+            findings.append(ScannerFinding(
+                category=RiskCategory.prompt_injection,
+                confidence=confidence,
+                anonymized_detail="Matched injection pattern rule",
+            ))
+            if confidence >= 0.9:
                 findings.append(ScannerFinding(
-                    category=RiskCategory.prompt_injection,
+                    category=RiskCategory.jailbreak,
                     confidence=confidence,
-                    anonymized_detail="Matched injection pattern rule",
+                    anonymized_detail="Detected jailbreak pattern",
                 ))
-                if confidence >= 0.9:
-                    findings.append(ScannerFinding(
-                        category=RiskCategory.jailbreak,
-                        confidence=confidence,
-                        anonymized_detail="Detected jailbreak pattern",
-                    ))
         return findings
 
     def _check_harmful_content_rules(self, content: str) -> list[ScannerFinding]:
-        """Check content against harmful content request regex patterns."""
+        """Check content against harmful content request regex patterns.
+
+        Only reports findings from rules with confidence >= self._min_confidence.
+        """
         findings: list[ScannerFinding] = []
         for regex, confidence in _HARMFUL_REGEXES:
+            if confidence < self._min_confidence:
+                continue
             if regex.search(content):
                 findings.append(ScannerFinding(
                     category=RiskCategory.harmful_content,

@@ -42,8 +42,10 @@ class MockProviderRegistry(ProviderRegistry):
     def __init__(self, provider: MockModelProvider | None = None):
         # Skip parent __init__ which reads env vars
         self._providers = {}
+        self._display_names = {}
         p = provider or MockModelProvider()
         self._providers[p.model_id] = p
+        self._display_names[p.model_id] = p.display_name
 
     def _init_providers(self) -> None:
         pass
@@ -55,7 +57,7 @@ class MockProviderRegistry(ProviderRegistry):
 def get_mock_pipeline() -> SafetyPipeline:
     """Pipeline with mock scanners for testing."""
     return SafetyPipeline(
-        scanners=[MockDataProtectionScanner(), MockLLMGuardrailScanner()],
+        scanners=[MockDataProtectionScanner(score_threshold=0.0), MockLLMGuardrailScanner(min_confidence=0.0)],
         policy=SafetyPolicy(),
         timeout=30.0,
     )

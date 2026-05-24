@@ -15,7 +15,7 @@ import uuid
 from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.db.schema import Base, ModelConfig, User
+from app.db.schema import Base, ModelConfig, PolicyConfig, User
 
 EMPLOYEE_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 ADMIN_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
@@ -160,6 +160,44 @@ async def seed_model_configs(database_url: str) -> None:
     await engine.dispose()
 
 
+SEED_POLICY_CONFIGS = [
+    {"scanner_name": "data_protection", "enabled": True, "sensitivity": "medium"},
+    {"scanner_name": "content_guard", "enabled": True, "sensitivity": "medium"},
+]
+
+
+async def seed_policy_configs(database_url: str) -> None:
+    """Seed default PolicyConfig records for safety scanners.
+
+    Only creates entries if no PolicyConfig rows exist (idempotent).
+    Admin manages configs via /api/admin/policy after initial seed.
+    """
+    engine_kwargs = {}
+    if database_url.startswith("sqlite"):
+        engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+    engine = create_async_engine(database_url, echo=False, **engine_kwargs)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async with async_session() as session:
+        existing = await session.execute(sa_select(PolicyConfig))
+        if existing.scalars().first() is not None:
+            await engine.dispose()
+            return
+
+        for cfg_data in SEED_POLICY_CONFIGS:
+            result = await session.execute(
+                sa_select(PolicyConfig).where(PolicyConfig.scanner_name == cfg_data["scanner_name"])
+            )
+            if result.scalar_one_or_none() is None:
+                config = PolicyConfig(**cfg_data)
+                session.add(config)
+
+        await session.commit()
+
+    await engine.dispose()
+
+
 def main() -> None:
     from dotenv import load_dotenv
 
@@ -167,6 +205,7 @@ def main() -> None:
     database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./enterprise_chat_mvp.db")
     asyncio.run(seed_users(database_url))
     asyncio.run(seed_model_configs(database_url))
+    asyncio.run(seed_policy_configs(database_url))
 
 
 if __name__ == "__main__":

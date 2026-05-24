@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.current_user import get_current_user
+from app.admin.policy_repo import PolicyConfigRepository
 from app.db import get_db_session
 from app.db.schema import User
 from app.audit.repository import AuditRepository
@@ -22,7 +23,7 @@ from app.conversations.repository import ConversationRepository
 from app.models.providers import ProviderRegistry, get_provider_registry
 from app.safety.pipeline import SafetyPipeline
 from app.safety.policy import SafetyPolicy
-from app.safety.scanner_interface import PolicyDecision
+from app.safety.scanner_interface import PolicyDecision, ScannerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -58,22 +59,69 @@ class ModelInfo(BaseModel):
 # --- Dependencies ---
 
 
-def get_safety_pipeline() -> SafetyPipeline:
-    """Create SafetyPipeline with real scanners, graceful fallback if deps unavailable."""
+SENSITIVITY_MAP: dict[str, dict[str, float]] = {
+    "low": {"data_protection": 0.5, "content_guard": 0.95},
+    "medium": {"data_protection": 0.7, "content_guard": 0.80},
+    "high": {"data_protection": 0.85, "content_guard": 0.70},
+}
+
+DEFAULT_SCANNER_CONFIGS: dict[str, ScannerConfig] = {
+    "data_protection": ScannerConfig(enabled=True, score_threshold=0.7, min_confidence=0.80),
+    "content_guard": ScannerConfig(enabled=True, score_threshold=0.7, min_confidence=0.80),
+}
+
+
+async def get_safety_pipeline(db: AsyncSession = Depends(get_db_session)) -> SafetyPipeline:
+    """Create SafetyPipeline driven by PolicyConfig from DB.
+
+    Reads scanner enabled/sensitivity from the policy_configs table.
+    Disabled scanners are excluded. Sensitivity maps to concrete thresholds
+    via SENSITIVITY_MAP. Falls back to defaults if DB has no config rows.
+    """
+    try:
+        policies = await PolicyConfigRepository.list_policies(db)
+    except Exception as e:
+        logger.warning("Failed to read PolicyConfig from DB, using defaults: %s", e)
+        policies = []
+
+    configs: dict[str, ScannerConfig] = {}
+    for p in policies:
+        thresholds = SENSITIVITY_MAP.get(p.sensitivity, SENSITIVITY_MAP["medium"])
+        thresholds_for_scanner = thresholds.get(p.scanner_name, SENSITIVITY_MAP["medium"][p.scanner_name] if p.scanner_name in SENSITIVITY_MAP["medium"] else 0.7)
+        configs[p.scanner_name] = ScannerConfig(
+            enabled=p.enabled,
+            score_threshold=thresholds_for_scanner,
+            min_confidence=thresholds_for_scanner,
+        )
+
+    # Fill in defaults for any scanner not in DB
+    for name, default in DEFAULT_SCANNER_CONFIGS.items():
+        if name not in configs:
+            configs[name] = default
+
     scanners = []
 
-    try:
-        from app.safety.data_protection import DataProtectionScanner
-        scanners.append(DataProtectionScanner())
-    except Exception as e:
-        logger.warning("DataProtectionScanner unavailable: %s", e)
+    dp_config = configs.get("data_protection", DEFAULT_SCANNER_CONFIGS["data_protection"])
+    if dp_config.enabled:
+        try:
+            from app.safety.data_protection import DataProtectionScanner
+            scanners.append(DataProtectionScanner(score_threshold=dp_config.score_threshold))
+            logger.info("DataProtectionScanner enabled: score_threshold=%.2f", dp_config.score_threshold)
+        except Exception as e:
+            logger.warning("DataProtectionScanner unavailable: %s", e)
 
-    try:
-        import app.safety.torch_compat  # noqa: F401 — must patch before transformers
-        from app.safety.llm_guardrails import LLMGuardrailScanner
-        scanners.append(LLMGuardrailScanner())
-    except Exception as e:
-        logger.warning("ContentGuardScanner unavailable: %s", e)
+    cg_config = configs.get("content_guard", DEFAULT_SCANNER_CONFIGS["content_guard"])
+    if cg_config.enabled:
+        try:
+            import app.safety.torch_compat  # noqa: F401 — must patch before transformers
+            from app.safety.llm_guardrails import LLMGuardrailScanner
+            scanners.append(LLMGuardrailScanner(min_confidence=cg_config.min_confidence))
+            logger.info("ContentGuardScanner enabled: min_confidence=%.2f", cg_config.min_confidence)
+        except Exception as e:
+            logger.warning("ContentGuardScanner unavailable: %s", e)
+
+    if not scanners:
+        logger.warning("No scanners enabled — pipeline will always allow unless fail-closed triggers")
 
     logger.info("SafetyPipeline initialized with %d scanner(s)", len(scanners))
     policy = SafetyPolicy()

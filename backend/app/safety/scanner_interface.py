@@ -1,7 +1,7 @@
 """Scanner interface types for the safety pipeline.
 
 Defines the Scanner protocol, result types, finding types,
-policy decision types, and risk category enum.
+policy decision types, risk category enum, and scanner config.
 """
 
 from __future__ import annotations
@@ -33,6 +33,20 @@ class ScannerFinding:
     category: RiskCategory
     confidence: float
     anonymized_detail: str
+
+
+@dataclass
+class ScannerConfig:
+    """Configuration for a safety scanner — driven by PolicyConfig DB table.
+
+    Maps admin-facing sensitivity (low/medium/high) to concrete scanner params:
+    - score_threshold: minimum confidence for DataProtectionScanner findings
+    - min_confidence: minimum rule confidence for ContentGuardScanner regex rules
+    """
+
+    enabled: bool = True
+    score_threshold: float = 0.7
+    min_confidence: float = 0.80
 
 
 @dataclass

@@ -73,6 +73,15 @@ class SafetyPipeline:
                 scanner_findings_summary={"error": "pipeline_timeout"},
             )
 
+        # No scanners registered — admin disabled all, allow through
+        if not results:
+            return PolicyDecision(
+                action="allow",
+                risk_categories=[],
+                block_message=None,
+                scanner_findings_summary={"scanners": "none_enabled"},
+            )
+
         # If all scanners failed, fail closed
         if all(r is None for r in results):
             return PolicyDecision(
