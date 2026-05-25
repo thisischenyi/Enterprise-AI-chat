@@ -54,18 +54,7 @@ class StreamingChatService:
             yield {"event": "error", "data": {"message": f"模型 '{model_id}' 不可用"}}
             return
 
-        # Step 1: Input safety scan
-        input_decision = await pipeline.scan_input(message, user_id, model_id)
-        if input_decision.action in ("block", "fail_closed"):
-            await audit_repo.record_event(user_id, model_id, "input", input_decision)
-            await db.commit()
-            yield {
-                "event": "error",
-                "data": {"message": input_decision.block_message or "输入内容被安全策略拦截"},
-            }
-            return
-
-        # Lazy-create or load conversation
+        # Lazy-create or load conversation (before input scan so we can store blocked messages)
         conversation = None
         if conversation_id:
             conv_uuid = uuid.UUID(conversation_id)
@@ -74,6 +63,34 @@ class StreamingChatService:
         if conversation is None:
             title = message[:50]
             conversation = await conv_repo.create_conversation(user_id, title, model_id)
+
+        # Step 1: Input safety scan
+        input_decision = await pipeline.scan_input(message, user_id, model_id)
+        if input_decision.action in ("block", "fail_closed"):
+            await audit_repo.record_event(user_id, model_id, "input", input_decision)
+            
+            # Store user message and blocked message in conversation
+            await conv_repo.add_message(conversation.id, "user", message)
+            block_message = input_decision.block_message or "输入内容被安全策略拦截"
+            blocked_msg = await conv_repo.add_message(
+                conversation.id,
+                "blocked",
+                block_message,
+                extra={"risk_categories": input_decision.risk_categories},
+            )
+            await conv_repo.update_timestamp(conversation.id)
+            await db.commit()
+            
+            yield {
+                "event": "blocked",
+                "data": {
+                    "message": block_message,
+                    "categories": input_decision.risk_categories,
+                    "conversation_id": str(conversation.id),
+                    "message_id": str(blocked_msg.id),
+                },
+            }
+            return
 
         # Store user message
         await conv_repo.add_message(conversation.id, "user", message)

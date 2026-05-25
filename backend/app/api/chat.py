@@ -167,6 +167,11 @@ async def chat_send(
             role = m.role if m.role in ("system", "user", "assistant", "tool") else "user"
             history_messages.append({"role": role, "content": m.content})
 
+    # Lazy-create conversation if needed (before input scan so we can store blocked messages)
+    if conversation is None:
+        title = request.message[:50]
+        conversation = await conv_repo.create_conversation(user_id, title, request.model_id)
+
     # Build messages list for model call
     messages = history_messages + [{"role": "user", "content": request.message}]
 
@@ -175,24 +180,47 @@ async def chat_send(
 
     if input_decision.action == "block":
         await audit_repo.record_event(user_id, request.model_id, "input", input_decision)
+        
+        # Store user message and blocked message in conversation
+        await conv_repo.add_message(conversation.id, "user", request.message)
+        block_message = input_decision.block_message or "Your message was blocked."
+        blocked_msg = await conv_repo.add_message(
+            conversation.id,
+            "blocked",
+            block_message,
+            extra={"risk_categories": input_decision.risk_categories},
+        )
+        await conv_repo.update_timestamp(conversation.id)
+        
         return ChatResponse(
             status="blocked",
-            content=input_decision.block_message or "Your message was blocked.",
+            content=block_message,
             risk_categories=input_decision.risk_categories,
             revision_hint="Please revise your message to avoid sensitive content.",
+            conversation_id=str(conversation.id),
+            message_id=str(blocked_msg.id),
         )
 
     if input_decision.action == "fail_closed":
         await audit_repo.record_event(user_id, request.model_id, "input", input_decision)
+        
+        # Store user message and blocked message in conversation
+        await conv_repo.add_message(conversation.id, "user", request.message)
+        block_message = input_decision.block_message or "Your message could not be processed due to a system error. Please try again later."
+        blocked_msg = await conv_repo.add_message(
+            conversation.id,
+            "blocked",
+            block_message,
+            extra={"risk_categories": [], "error": "fail_closed"},
+        )
+        await conv_repo.update_timestamp(conversation.id)
+        
         return ChatResponse(
             status="fail_closed",
-            content=input_decision.block_message or "Your message could not be processed due to a system error. Please try again later.",
+            content=block_message,
+            conversation_id=str(conversation.id),
+            message_id=str(blocked_msg.id),
         )
-
-    # Lazy-create conversation if none exists
-    if conversation is None:
-        title = request.message[:50]
-        conversation = await conv_repo.create_conversation(user_id, title, request.model_id)
 
     # Store user message
     user_msg = await conv_repo.add_message(conversation.id, "user", request.message)
